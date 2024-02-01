@@ -822,6 +822,8 @@ Parâmetros
     blindagens : lista dos índices das blindagens. 
     armadura : índice da armadura. 
     v_fonte_t : vetor da fonte de tensão [V] no tempo. 
+    tmax : tempo [s] máximo da simulação. Os últimos ~20% serão lixo numérico.
+    nt : número de passos no tempo
     tempo_abre : tempo no qual a chave desconecta a fonte. 
     aterrar_receptor : vetor booleano que controla se as blindagens e armadura
         são aterradas no final (receptor) de cada segmento ou não. 
@@ -845,8 +847,10 @@ function simular_cabo(
     blindagens,
     armadura,
     v_fonte_t,
+    tmax,
+    nt,
     tempo_abre,
-    aterrar_receptor
+    aterrar_receptor,
     )
     nc2, _, _, num_segmentos = size(yn_segmentos)
     nc1 = Int(nc2 / 2)
