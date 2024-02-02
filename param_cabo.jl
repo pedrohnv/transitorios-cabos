@@ -974,13 +974,13 @@ function salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo,
             end
 
             if k <= length(pares_falhas)
-                write(io, "," * string(pares_falhas[k][1]))
+                write(io, "," * nome_condutores[pares_falhas[k][1]])
             else
                 write(io, ",")
             end
 
             if k <= length(pares_falhas)
-                write(io, "," * string(pares_falhas[k][2]))
+                write(io, "," * nome_condutores[pares_falhas[k][2]])
             else
                 write(io, ",")
             end
