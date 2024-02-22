@@ -1,4 +1,4 @@
-descrição de cada coluna:,indice_condutores,dt,nt,comprimentos,aterrar_receptor,segmento_falha,terminal_fonte,R_emissor_shunt,R_falha_serie,par_falha_1,par_falha_2,R_falha_shunt,R_chave,R_curto,arquivo_resultados
+descrição de cada coluna:,indice_condutores,dt,nt,comprimentos,aterrar_receptor,segmento_falha,terminal_fonte,R_emissor_shunt,R_falha_serie,par_falha_1,par_falha_2,R_falha_shunt,R_fonte,R_curto,arquivo_resultados
 "indice_condutores descreve o índice (linha) correspondente a cada condutor para ser usado nas colunas seguintes. Não alterar este valor, pois ele é meramente descritivo.",1 – fase 1,2.50E-09,100352,500,FALSE,1,1,-1,-1,1,3,-1,50,1.00E-06,caso_n.csv
 dt é o passo no tempo [s].,2 – blindagem 1,,,2000,TRUE,,,-1,-1,,,,,,
 nt é o número de passos no tempo.,3 – fase 2,,,,,,,-1,-1,,,,,,
@@ -11,6 +11,6 @@ R_falha_serie é o vetor de resistências série nos condutores no ponto da falh
 par_falha_1 é um vetor de índices (ver desc_indice_condutores) que indica o primeiro condutor envolvido na falha descrita pelo valor correspondente na coluna R_falha_shunt,,,,,,,,,,,,,,,
 par_falha_2 é um  vetor de índices (ver desc_indice_condutores) que indica o segundo condutor envolvido na falha descrita pelo valor correspondente na coluna R_falha_shunt,,,,,,,,,,,,,,,
 R_falha_shunt é o vetor de resistências de falha entre os condutores. Valor negativo significa curto-circuito (sem falha). Não usar 0. ,,,,,,,,,,,,,,,
-R_chave resistência série que conecta a fonte ao terminal sendo excitado. Torna-se infinita para um tempo maior que tempo_abre.,,,,,,,,,,,,,,,
+R_fonte resistência interna da fonte.,,,,,,,,,,,,,,,
 "R_curto é a resistência de curto circuito, para evitar divisão por zero. Valores muito pequenos tendem a criar instabilidade numérica.",,,,,,,,,,,,,,,
 arquivo_resultados é o caminho (nome) do arquivo no qual salvar os resultados da simulação.,,,,,,,,,,,,,,,

@@ -78,7 +78,7 @@ begin  # ler parâmetros
     tmax_trunc = tempo[nt_trunc]  # tempo [s] final que será salvo
     R_emissor_shunt = ignorar_missing("R_emissor_shunt")
     R_falha_serie = ignorar_missing("R_falha_serie")
-    R_chave = Float64.(param[1,"R_chave"])
+    R_fonte = Float64.(param[1,"R_fonte"])
     R_curto = Float64.(param[1,"R_curto"])
     R_falha_shunt = ignorar_missing("R_falha_shunt")
     num_pares_falhas = length(R_falha_shunt)
@@ -123,5 +123,5 @@ for k = 1:num_comprimentos
     @lock lk yn_comprimentos[:,:,:,k] .= reshape(h5read(arquivo_matrizes, nome), (nc2, nc2, nf))
 end
 
-vout_t = simular_cabo(yn_comprimentos, R_curto, R_chave, R_emissor_shunt, R_falha_shunt, R_falha_serie, segmento_falha, pares_falhas, terminal_fonte, fases, blindagens, armadura, v_fonte_t, tmax, nt, aterrar_receptor)
-@lock lk salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, comprimentos, segmento_falha, pares_falhas, terminal_fonte, R_emissor_shunt, R_falha_serie, R_falha_shunt, R_chave, nt_trunc, nome_condutores, aterrar_receptor)
+vout_t = simular_cabo(yn_comprimentos, R_curto, R_fonte, R_emissor_shunt, R_falha_shunt, R_falha_serie, segmento_falha, pares_falhas, terminal_fonte, fases, blindagens, armadura, v_fonte_t, tmax, nt, aterrar_receptor)
+@lock lk salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, comprimentos, segmento_falha, pares_falhas, terminal_fonte, R_emissor_shunt, R_falha_serie, R_falha_shunt, R_fonte, nt_trunc, nome_condutores, aterrar_receptor)
