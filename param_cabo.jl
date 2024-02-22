@@ -590,7 +590,7 @@ Parâmetros
     yn : matriz de admitância nodal [S]. É modificada.
     yn_segmentos : matrizes de admitância [S], dimensão (N, N, num_segmentos).
     y_curto : admitância [S] de curto circuito, para evitar divisão por zero.
-    y_chave : admitância [S] série que conecta a chave à fonte.
+    y_fonte : admitância [S] interna da fonte.
     y_emissor_shunt : vetor de admitâncias [S] no terminal emissor.
     y_falha_shunt : vetor de admitâncias [S] das falhas entre os condutores;
         A correspondência do índice neste vetor e os condutores envolvidos é
@@ -611,7 +611,7 @@ function montar_yn!(
     yn,
     yn_segmentos,
     y_curto,
-    y_chave,
+    y_fonte,
     y_emissor_shunt,
     y_falha_shunt,
     y_falha_serie,
@@ -625,7 +625,6 @@ function montar_yn!(
     )
     num_segmentos = size(yn_segmentos)[3]
     nsis = size(yn)[1]
-    no_chave = nsis - 1
     nc2 = size(yn_segmentos)[1]
     nc1 = Int(nc2 // 2)  # número de condutores
     falha_serie = any(real.(y_falha_serie) .> 0.0)
@@ -673,14 +672,7 @@ function montar_yn!(
             end
         end
     end
-    # emissor para fonte de tensão
-    yn[terminal_fonte, terminal_fonte] += y_chave
-    yn[terminal_fonte, no_chave] += -y_chave
-    yn[no_chave, terminal_fonte] += -y_chave
-    yn[no_chave, no_chave] += y_chave
-    # equação da fonte de tensão na formulação MNA (Análise Nodal Modificada):
-    yn[no_chave, nsis] = 1.0
-    yn[nsis, no_chave] = 1.0
+    yn[terminal_fonte, terminal_fonte] += y_fonte
 end
 
 
@@ -690,7 +682,7 @@ as blindagens e armadura aterrados. Vide `montar_yn!`
 function montar_yn(
     yn_segmentos,
     y_curto,
-    y_chave,
+    y_fonte,
     y_emissor_shunt,
     y_falha_shunt,
     y_falha_serie,
@@ -704,13 +696,13 @@ function montar_yn(
     )
     nc2, _, num_segmentos = size(yn_segmentos)
     nc1 = Int(nc2 // 2)  # número de condutores
-    nsis = nc1 * (num_segmentos + 1) + 2  # tamanho do sistema
+    nsis = nc1 * (num_segmentos + 1)  # tamanho do sistema
     falha_serie = any(abs.(y_falha_serie) .> 0.0)
     if segmento_falha > 0 && falha_serie
         nsis += nc1
     end
     yn = zeros(ComplexF64, nsis, nsis)
-    montar_yn!(yn, yn_segmentos, y_curto, y_chave, y_emissor_shunt,
+    montar_yn!(yn, yn_segmentos, y_curto, y_fonte, y_emissor_shunt,
                y_falha_shunt, y_falha_serie, segmento_falha, pares_falhas,
                terminal_fonte, fases, blindagens, armadura, aterrar_receptor)
     return yn
@@ -807,7 +799,7 @@ Parâmetros
     yn_segmentos : conjunto de admitâncias [S] dos segmentos de cabo,
         dimensão (num_condutores, num_condutores, num_frequencias, num_segmentos).
     R_curto : resistência [Ω] de curto circuito, para evitar divisão por zero. 
-    R_chave : resistência [Ω] série que conecta a chave à fonte. 
+    R_fonte : resistência [Ω] interna da fonte. 
     R_emissor_shunt : vetor de resistências [Ω] no terminal emissor. 
         Use valores negativos para ignorar.
     R_falha_shunt : vetor de resistências [Ω] das falhas entre os condutores; 
@@ -824,7 +816,6 @@ Parâmetros
     v_fonte_t : vetor da fonte de tensão [V] no tempo. 
     tmax : tempo [s] máximo da simulação. Os últimos ~20% serão lixo numérico.
     nt : número de passos no tempo
-    tempo_abre : tempo no qual a chave desconecta a fonte. 
     aterrar_receptor : vetor booleano que controla se as blindagens e armadura
         são aterradas no final (receptor) de cada segmento ou não. 
 
@@ -836,7 +827,7 @@ corresponde a um terminal.
 function simular_cabo(
     yn_segmentos,
     R_curto,
-    R_chave,
+    R_fonte,
     R_emissor_shunt,
     R_falha_shunt,
     R_falha_serie,
@@ -849,19 +840,18 @@ function simular_cabo(
     v_fonte_t,
     tmax,
     nt,
-    tempo_abre,
     aterrar_receptor,
     )
     nc2, _, _, num_segmentos = size(yn_segmentos)
     nc1 = Int(nc2 / 2)
     @assert R_curto > 0.0
-    @assert R_chave > 0.0
+    @assert R_fonte > 0.0
     @assert terminal_fonte > 0
     @assert all(fases .> 0)
     @assert all(blindagens .> 0)
     @assert armadura > 0
     y_curto = 1.0 / R_curto
-    y_chave = 1.0 / R_chave
+    y_fonte = 1.0 / R_fonte
     y_emissor_shunt = similar(R_emissor_shunt)
     y_falha_shunt = similar(R_falha_shunt)
     y_falha_serie = similar(R_falha_serie)
@@ -891,41 +881,20 @@ function simular_cabo(
     nf = length(sk)
     filtro = "Hanning"  # da Transformada inversa de Laplace
     nsis = nc1 * (num_segmentos + 1)  # tamanho do sistema linear
-    nsis += 1  # nó entre fonte de tensão e terminal da chave
-    nsis += 1  # equação da fonte de tensão
     if segmento_falha > 0 && falha_serie
         nsis += nc1
     end
     yn = zeros(ComplexF64, (nsis, nsis, nf))
     rhs = zeros(ComplexF64, (nsis, nf))
-    i_chave_s = zeros(ComplexF64, nf)
-    no_chave = nsis - 1
     # primeiro loop, chave fechada
     for f = 1:nf
         ynf = view(yn, :, :, f)
         yn_segf = view(yn_segmentos, :, :, f, :)
-        montar_yn!(ynf, yn_segf, y_curto, y_chave, y_emissor_shunt, y_falha_shunt,
+        montar_yn!(ynf, yn_segf, y_curto, y_fonte, y_emissor_shunt, y_falha_shunt,
                    y_falha_serie, segmento_falha, pares_falhas, terminal_fonte,
                    fases, blindagens, armadura, aterrar_receptor)
         rhs[:,f] .= 0.0
-        rhs[nsis, f] = v_fonte_s[f]
-        rhs[:,f] .= yn[:,:,f] \ rhs[:,f]
-        i_chave_s[f] = (rhs[terminal_fonte, f] - rhs[no_chave, f]) * y_chave
-    end
-    i_chave_t = invlaplace2(i_chave_s, sk, tmax, nt, filtro)
-    tp = Int(tempo_abre ÷ dt) + 1
-    i_chave_t[tp:end] .= 0.0
-    _, i_chave_s[:] = laplace(i_chave_t, tmax, nt)
-    # segundo loop, chave aberta
-    for f = 1:nf
-        # remover resistência que representou a chave. Agora ela é uma fonte de corrente
-        yn[terminal_fonte, terminal_fonte, f] -= y_chave
-        yn[terminal_fonte, no_chave, f] -= -y_chave
-        yn[no_chave, terminal_fonte, f] -= -y_chave
-        yn[no_chave, no_chave, f] -= y_chave
-        rhs[:,f] .= 0.0
-        rhs[terminal_fonte, f] = -i_chave_s[f]
-        rhs[no_chave, f] = i_chave_s[f]
+        rhs[terminal_fonte, f] = v_fonte_s[f] * y_fonte
         rhs[:,f] .= yn[:,:,f] \ rhs[:,f]
     end
     vout_t = zeros(Float64, (nt, nc1))
@@ -938,9 +907,9 @@ end
 
 """Salva os dados e resultados num arquivo CSV."""
 function salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo,
-                           tempo_abre, comprimentos, segmento_falha, pares_falhas,
+                           comprimentos, segmento_falha, pares_falhas,
                            terminal_fonte, R_emissor_shunt, R_falha_serie,
-                           R_falha_shunt, R_chave, nt_trunc, nome_condutores,
+                           R_falha_shunt, R_fonte, nt_trunc, nome_condutores,
                            aterrar_receptor)
     open(arquivo_resultados, "w") do io
         write(io, "tempo")
@@ -955,9 +924,8 @@ function salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo,
         write(io, ",R_falha_serie")
         write(io, ",comprimentos")
         write(io, ",aterrar_receptor")
-        write(io, ",R_chave")
+        write(io, ",R_fonte")
         write(io, ",segmento_falha")
-        write(io, ",tempo_abre")
         write(io, ",terminal_fonte")
         for k = 1:nt_trunc
             write(io, "\n")
@@ -1010,12 +978,11 @@ function salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo,
             end
             
             if k == 1
-                write(io, "," * string(R_chave))
+                write(io, "," * string(R_fonte))
                 write(io, "," * string(segmento_falha))
-                write(io, "," * string(tempo_abre))
                 write(io, "," * string(terminal_fonte))
             else
-                write(io, ",,,,")
+                write(io, ",,,")
             end
         end
     end

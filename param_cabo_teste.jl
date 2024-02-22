@@ -108,19 +108,10 @@ function testar_montar_yn_sem_falha()
     aterrar_receptor = [true]
 
     # YN correto (esperado)
-    nsis = nc1 * (num_segmentos + 1) + 2
-    no_chave = nsis - 1
+    nsis = nc1 * (num_segmentos + 1)
     yn_correto = zeros(Int, nsis, nsis)
     
-    # emissor para fonte de tensão, via y_chave:
     yn_correto[terminal_fonte, terminal_fonte] += 1
-    yn_correto[terminal_fonte, no_chave] += 1
-    yn_correto[no_chave, terminal_fonte] += 1
-    yn_correto[no_chave, no_chave] += 1
-    
-    # equação da fonte de tensão:
-    yn_correto[no_chave, nsis] += 1
-    yn_correto[nsis, no_chave] += 1
 
     # y_emissor_shunt:
     for i in 1:nc1
@@ -148,14 +139,12 @@ function testar_montar_yn_sem_falha()
     end
 
     yn_correto2 = [
-        3 1 1 1 1 1 1 0 
-        1 2 1 1 1 1 0 0 
-        1 1 2 1 1 1 0 0 
-        1 1 1 1 1 1 0 0 
-        1 1 1 1 2 2 0 0 
-        1 1 1 1 2 3 0 0 
-        1 0 0 0 0 0 1 1 
-        0 0 0 0 0 0 1 0 
+        3 1 1 1 1 1 
+        1 2 1 1 1 1 
+        1 1 2 1 1 1 
+        1 1 1 1 1 1 
+        1 1 1 1 2 2 
+        1 1 1 1 2 3 
     ]
     @assert yn_correto == yn_correto2
 
@@ -168,11 +157,11 @@ function testar_montar_yn_sem_falha()
     end
 
     y_curto = 1.0 + 0.0im
-    y_chave = 1.0 + 0.0im
+    y_fonte = 1.0 + 0.0im
     y_emissor_shunt = ones(ComplexF64, nc1)
     y_falha_serie = zeros(ComplexF64, nc1)
     y_falha_shunt = zeros(ComplexF64, num_pares_falhas)
-    yn = montar_yn(yn_segmentos, y_curto, y_chave, y_emissor_shunt,
+    yn = montar_yn(yn_segmentos, y_curto, y_fonte, y_emissor_shunt,
                    y_falha_shunt, y_falha_serie, segmento_falha, pares_falhas,
                    terminal_fonte, fases, blindagens, armadura, aterrar_receptor)
     yn = Int.(abs.(yn))
@@ -201,20 +190,12 @@ function testar_montar_yn_falha_shunt()
     aterrar_receptor = [false, true]
 
     # YN correto (esperado)
-    nsis = nc1 * (num_segmentos + 1) + 2
-    no_chave = nsis - 1
+    nsis = nc1 * (num_segmentos + 1)
+    no_fonte = nsis - 1
     yn_correto = zeros(Int, nsis, nsis)
     
-    # emissor para fonte de tensão, via y_chave:
     yn_correto[terminal_fonte, terminal_fonte] += 1
-    yn_correto[terminal_fonte, no_chave] += 1
-    yn_correto[no_chave, terminal_fonte] += 1
-    yn_correto[no_chave, no_chave] += 1
     
-    # equação da fonte de tensão:
-    yn_correto[no_chave, nsis] += 1
-    yn_correto[nsis, no_chave] += 1
-
     # y_emissor_shunt:
     for i in 1:nc1
         yn_correto[i,i] += 1
@@ -260,17 +241,15 @@ function testar_montar_yn_falha_shunt()
     end
 
     yn_correto2 = [
-        3 1 1 1 1 1 0 0 0 1 0 
-        1 2 1 1 1 1 0 0 0 0 0 
-        1 1 2 1 1 1 0 0 0 0 0 
-        1 1 1 4 3 3 1 1 1 0 0 
-        1 1 1 3 4 3 1 1 1 0 0 
-        1 1 1 3 3 4 1 1 1 0 0 
-        0 0 0 1 1 1 1 1 1 0 0 
-        0 0 0 1 1 1 1 2 2 0 0 
-        0 0 0 1 1 1 1 2 3 0 0 
-        1 0 0 0 0 0 0 0 0 1 1 
-        0 0 0 0 0 0 0 0 0 1 0 
+        3 1 1 1 1 1 0 0 0 
+        1 2 1 1 1 1 0 0 0 
+        1 1 2 1 1 1 0 0 0 
+        1 1 1 4 3 3 1 1 1 
+        1 1 1 3 4 3 1 1 1 
+        1 1 1 3 3 4 1 1 1 
+        0 0 0 1 1 1 1 1 1 
+        0 0 0 1 1 1 1 2 2 
+        0 0 0 1 1 1 1 2 3  
     ]
     @assert yn_correto == yn_correto2
 
@@ -283,11 +262,11 @@ function testar_montar_yn_falha_shunt()
     end
 
     y_curto = 1.0 + 0.0im
-    y_chave = 1.0 + 0.0im
+    y_fonte = 1.0 + 0.0im
     y_emissor_shunt = ones(ComplexF64, nc1)
     y_falha_serie = zeros(ComplexF64, nc1)
     y_falha_shunt = ones(ComplexF64, num_pares_falhas)
-    yn = montar_yn(yn_segmentos, y_curto, y_chave, y_emissor_shunt,
+    yn = montar_yn(yn_segmentos, y_curto, y_fonte, y_emissor_shunt,
                    y_falha_shunt, y_falha_serie, segmento_falha, pares_falhas,
                    terminal_fonte, fases, blindagens, armadura, aterrar_receptor)
     yn = Int.(abs.(yn))
@@ -316,20 +295,11 @@ function testar_montar_yn_falha_serie()
     aterrar_receptor = [false, true]
 
     # YN correto (esperado)
-    nsis = nc1 * (num_segmentos + 2) + 2
-    no_chave = nsis - 1
+    nsis = nc1 * (num_segmentos + 2)
     yn_correto = zeros(Int, nsis, nsis)
     
-    # emissor para fonte de tensão, via y_chave:
     yn_correto[terminal_fonte, terminal_fonte] += 1
-    yn_correto[terminal_fonte, no_chave] += 1
-    yn_correto[no_chave, terminal_fonte] += 1
-    yn_correto[no_chave, no_chave] += 1
     
-    # equação da fonte de tensão:
-    yn_correto[no_chave, nsis] += 1
-    yn_correto[nsis, no_chave] += 1
-
     # y_emissor_shunt:
     for i in 1:nc1
         yn_correto[i,i] += 1
@@ -386,20 +356,18 @@ function testar_montar_yn_falha_serie()
     end
     
     yn_correto2 = [
-        3 1 1 1 1 1 0 0 0 0 0 0 1 0 
-        1 2 1 1 1 1 0 0 0 0 0 0 0 0 
-        1 1 2 1 1 1 0 0 0 0 0 0 0 0 
-        1 1 1 4 2 2 1 0 0 0 0 0 0 0 
-        1 1 1 2 4 2 0 1 0 0 0 0 0 0 
-        1 1 1 2 2 4 0 0 1 0 0 0 0 0 
-        0 0 0 1 0 0 2 1 1 1 1 1 0 0 
-        0 0 0 0 1 0 1 2 1 1 1 1 0 0 
-        0 0 0 0 0 1 1 1 2 1 1 1 0 0 
-        0 0 0 0 0 0 1 1 1 1 1 1 0 0 
-        0 0 0 0 0 0 1 1 1 1 2 2 0 0 
-        0 0 0 0 0 0 1 1 1 1 2 3 0 0 
-        1 0 0 0 0 0 0 0 0 0 0 0 1 1 
-        0 0 0 0 0 0 0 0 0 0 0 0 1 0 
+        3 1 1 1 1 1 0 0 0 0 0 0 
+        1 2 1 1 1 1 0 0 0 0 0 0 
+        1 1 2 1 1 1 0 0 0 0 0 0 
+        1 1 1 4 2 2 1 0 0 0 0 0 
+        1 1 1 2 4 2 0 1 0 0 0 0 
+        1 1 1 2 2 4 0 0 1 0 0 0 
+        0 0 0 1 0 0 2 1 1 1 1 1 
+        0 0 0 0 1 0 1 2 1 1 1 1 
+        0 0 0 0 0 1 1 1 2 1 1 1 
+        0 0 0 0 0 0 1 1 1 1 1 1 
+        0 0 0 0 0 0 1 1 1 1 2 2 
+        0 0 0 0 0 0 1 1 1 1 2 3  
     ]
     @assert yn_correto == yn_correto2
 
@@ -412,11 +380,11 @@ function testar_montar_yn_falha_serie()
     end
 
     y_curto = 1.0 + 0.0im
-    y_chave = 1.0 + 0.0im
+    y_fonte = 1.0 + 0.0im
     y_emissor_shunt = ones(ComplexF64, nc1)
     y_falha_serie = ones(ComplexF64, nc1)
     y_falha_shunt = ones(ComplexF64, num_pares_falhas)
-    yn = montar_yn(yn_segmentos, y_curto, y_chave, y_emissor_shunt,
+    yn = montar_yn(yn_segmentos, y_curto, y_fonte, y_emissor_shunt,
                    y_falha_shunt, y_falha_serie, segmento_falha, pares_falhas,
                    terminal_fonte, fases, blindagens, armadura, aterrar_receptor)
     yn = Int.(abs.(yn))
@@ -488,7 +456,7 @@ begin  # Parâmetros
                      mur_a, theta_jk, di, sig_s, eps_s, nx)
     #
     v_fonte_t = ones(nt)
-    R_chave = 50.0
+    R_fonte = 50.0
     R_curto = 1e-6  # FIXME tendência de causar instabilidade numérica
     Rbaixa = 1e-6  # Ω
     Ralta = 1e6  # Ω
@@ -512,14 +480,14 @@ function testar_sem_falha_um_segmento()
         yn_segmentos[:,:,:,k] .= reshape(h5read(arquivo_matrizes, nome), (nc2, nc2, nf))
     end
     terminal_fonte = 1
-    vout_t = simular_cabo(yn_segmentos, R_curto, R_chave, R_emissor_shunt,
+    vout_t = simular_cabo(yn_segmentos, R_curto, R_fonte, R_emissor_shunt,
                           R_falha_shunt, R_falha_serie, segmento_falha,
                           pares_falhas, terminal_fonte, fases, blindagens,
                           armadura, v_fonte_t, tmax, nt, tempo_abre, aterrar_receptor)
     arquivo_resultados = "teste/sem_falha_t$(terminal_fonte)_umseg.csv"
     salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, tempo_abre,
                       comprimentos, segmento_falha, pares_falhas, terminal_fonte,
-                      R_emissor_shunt, R_falha_serie, R_falha_shunt, R_chave,
+                      R_emissor_shunt, R_falha_serie, R_falha_shunt, R_fonte,
                       nt_trunc, nome_condutores, aterrar_receptor)
     # A simetria geométrica faz com que a reposta dos condutores não excitados
     # sejam iguais.
@@ -557,14 +525,14 @@ function testar_sem_falha_dois_segmentos()
         yn_segmentos[:,:,:,k] .= reshape(h5read(arquivo_matrizes, nome), (nc2, nc2, nf))
     end
     for terminal_fonte in fases
-        vout_t = simular_cabo(yn_segmentos, R_curto, R_chave, R_emissor_shunt,
+        vout_t = simular_cabo(yn_segmentos, R_curto, R_fonte, R_emissor_shunt,
                             R_falha_shunt, R_falha_serie, segmento_falha,
                             pares_falhas, terminal_fonte, fases, blindagens,
                             armadura, v_fonte_t, tmax, nt, tempo_abre, aterrar_receptor)
         arquivo_resultados = "teste/sem_falha_t$(terminal_fonte).csv"
         salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, tempo_abre,
                           comprimentos, segmento_falha, pares_falhas, terminal_fonte,
-                          R_emissor_shunt, R_falha_serie, R_falha_shunt, R_chave,
+                          R_emissor_shunt, R_falha_serie, R_falha_shunt, R_fonte,
                           nt_trunc, nome_condutores, aterrar_receptor)
     end
     # tem que dar um resultado igual ao sem falha com um segmento
@@ -605,14 +573,14 @@ function testar_falha_shunt_Ralta()
     for terminal_fonte in fases
         R_falha_shunt[:] .= -1.0
         R_falha_shunt[terminal_fonte] = Ralta
-        vout_t = simular_cabo(yn_segmentos, R_curto, R_chave, R_emissor_shunt,
+        vout_t = simular_cabo(yn_segmentos, R_curto, R_fonte, R_emissor_shunt,
                               R_falha_shunt, R_falha_serie, segmento_falha,
                               pares_falhas, terminal_fonte, fases, blindagens,
                               armadura, v_fonte_t, tmax, nt, tempo_abre, aterrar_receptor)
         arquivo_resultados = "teste/falha_shunt_Ralta_t$(terminal_fonte).csv"
         salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, tempo_abre,
                           comprimentos, segmento_falha, pares_falhas, terminal_fonte,
-                          R_emissor_shunt, R_falha_serie, R_falha_shunt, R_chave,
+                          R_emissor_shunt, R_falha_serie, R_falha_shunt, R_fonte,
                           nt_trunc, nome_condutores, aterrar_receptor)
     end
     # tem que dar um resultado similar ao sem falha
@@ -653,14 +621,14 @@ function testar_falha_serie_Rbaixa()
     for terminal_fonte in fases
         R_falha_serie[:] .= -1.0
         R_falha_serie[terminal_fonte] = Rbaixa
-        vout_t = simular_cabo(yn_segmentos, R_curto, R_chave, R_emissor_shunt,
+        vout_t = simular_cabo(yn_segmentos, R_curto, R_fonte, R_emissor_shunt,
                               R_falha_shunt, R_falha_serie, segmento_falha,
                               pares_falhas, terminal_fonte, fases, blindagens,
                               armadura, v_fonte_t, tmax, nt, tempo_abre, aterrar_receptor)
         arquivo_resultados = "teste/falha_serie_Rbaixa_t$(terminal_fonte).csv"
         salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, tempo_abre,
                           comprimentos, segmento_falha, pares_falhas, terminal_fonte,
-                          R_emissor_shunt, R_falha_serie, R_falha_shunt, R_chave,
+                          R_emissor_shunt, R_falha_serie, R_falha_shunt, R_fonte,
                           nt_trunc, nome_condutores, aterrar_receptor)
     end
     # tem que dar um resultado similar ao sem falha
@@ -703,14 +671,14 @@ function testar_ambas_falhas()
         R_falha_shunt[terminal_fonte] = Ralta
         R_falha_serie[:] .= -1.0
         R_falha_serie[terminal_fonte] = Rbaixa
-        vout_t = simular_cabo(yn_segmentos, R_curto, R_chave, R_emissor_shunt,
+        vout_t = simular_cabo(yn_segmentos, R_curto, R_fonte, R_emissor_shunt,
                               R_falha_shunt, R_falha_serie, segmento_falha,
                               pares_falhas, terminal_fonte, fases, blindagens,
                               armadura, v_fonte_t, tmax, nt, tempo_abre, aterrar_receptor)
         arquivo_resultados = "teste/falha_ambas_falhas_t$(terminal_fonte).csv"
         salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, tempo_abre,
                           comprimentos, segmento_falha, pares_falhas, terminal_fonte,
-                          R_emissor_shunt, R_falha_serie, R_falha_shunt, R_chave,
+                          R_emissor_shunt, R_falha_serie, R_falha_shunt, R_fonte,
                           nt_trunc, nome_condutores, aterrar_receptor)
     end
     # tem que dar um resultado similar ao sem falha

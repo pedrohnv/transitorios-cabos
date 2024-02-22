@@ -67,7 +67,6 @@ begin  # ler parâmetros
     nt = Int(ceil(nt_trunc / 0.80))  # 20% dos tempos finais é lixo numérico
     tempo = range(0, step=dt, length=nt)
     tmax = tempo[end]
-    tempo_abre = Float64.(param[1,"tempo_abre"])
     comprimentos = ignorar_missing("comprimentos")
     num_comprimentos = length(comprimentos)
     aterrar_receptor = Bool.(ignorar_missing("aterrar_receptor"))
@@ -124,5 +123,5 @@ for k = 1:num_comprimentos
     @lock lk yn_comprimentos[:,:,:,k] .= reshape(h5read(arquivo_matrizes, nome), (nc2, nc2, nf))
 end
 
-vout_t = simular_cabo(yn_comprimentos, R_curto, R_chave, R_emissor_shunt, R_falha_shunt, R_falha_serie, segmento_falha, pares_falhas, terminal_fonte, fases, blindagens, armadura, v_fonte_t, tmax, nt, tempo_abre, aterrar_receptor)
-@lock lk salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, tempo_abre, comprimentos, segmento_falha, pares_falhas, terminal_fonte, R_emissor_shunt, R_falha_serie, R_falha_shunt, R_chave, nt_trunc, nome_condutores, aterrar_receptor)
+vout_t = simular_cabo(yn_comprimentos, R_curto, R_chave, R_emissor_shunt, R_falha_shunt, R_falha_serie, segmento_falha, pares_falhas, terminal_fonte, fases, blindagens, armadura, v_fonte_t, tmax, nt, aterrar_receptor)
+@lock lk salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, comprimentos, segmento_falha, pares_falhas, terminal_fonte, R_emissor_shunt, R_falha_serie, R_falha_shunt, R_chave, nt_trunc, nome_condutores, aterrar_receptor)
