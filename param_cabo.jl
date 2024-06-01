@@ -371,8 +371,8 @@ Retorna
     Msprc : matriz reduzida
 """
 function eliprc(M, np)
-    Minv = linalg.inv(M)
-    lenM = M.shape[1]
+    Minv = inv(M)
+    lenM = size(M)[1]
     Msprc = Minv[1:lenM-np, 1:lenM-np]
     return Msprc
 end
