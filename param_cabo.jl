@@ -84,17 +84,17 @@ Referências
     p. 116-123, 2009.
 """
 function invlaplace2(y, s, tmax, nt::Int, filtro="")
-    filtro = titlecase(filtro)
+    filtro = uppercase(filtro)
     omega = imag(s[end])
     function sigma(w)
         alpha = pi * w / omega
-        if filtro == "Blackman"
+        if filtro == uppercase("Blackman")
             return 0.42 + 0.5 * cos(alpha) + 0.08 * cos(2 * alpha)
-        elseif filtro == "Hanning"
+        elseif filtro == uppercase("Hanning")
             return (1 + cos(pi * w / omega)) / 2
-        elseif filtro == "Lanczos"
+        elseif filtro == uppercase("Lanczos")
             return sin(alpha) / alpha
-        elseif filtro == "Riesz"
+        elseif filtro == uppercase("Riesz")
             return 1.0 - abs(w / omega)^2.0
         else
             return 1.0
