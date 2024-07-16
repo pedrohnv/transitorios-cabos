@@ -483,9 +483,9 @@ function testar_sem_falha_um_segmento()
     vout_t = simular_cabo(yn_segmentos, R_curto, R_fonte, R_emissor_shunt,
                           R_falha_shunt, R_falha_serie, segmento_falha,
                           pares_falhas, terminal_fonte, fases, blindagens,
-                          armadura, v_fonte_t, tmax, nt, tempo_abre, aterrar_receptor)
+                          armadura, v_fonte_t, tmax, nt, aterrar_receptor)
     arquivo_resultados = "teste/sem_falha_t$(terminal_fonte)_umseg.csv"
-    salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, tempo_abre,
+    salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo,
                       comprimentos, segmento_falha, pares_falhas, terminal_fonte,
                       R_emissor_shunt, R_falha_serie, R_falha_shunt, R_fonte,
                       nt_trunc, nome_condutores, aterrar_receptor)
@@ -528,9 +528,9 @@ function testar_sem_falha_dois_segmentos()
         vout_t = simular_cabo(yn_segmentos, R_curto, R_fonte, R_emissor_shunt,
                             R_falha_shunt, R_falha_serie, segmento_falha,
                             pares_falhas, terminal_fonte, fases, blindagens,
-                            armadura, v_fonte_t, tmax, nt, tempo_abre, aterrar_receptor)
+                            armadura, v_fonte_t, tmax, nt, aterrar_receptor)
         arquivo_resultados = "teste/sem_falha_t$(terminal_fonte).csv"
-        salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, tempo_abre,
+        salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo,
                           comprimentos, segmento_falha, pares_falhas, terminal_fonte,
                           R_emissor_shunt, R_falha_serie, R_falha_shunt, R_fonte,
                           nt_trunc, nome_condutores, aterrar_receptor)
@@ -576,9 +576,9 @@ function testar_falha_shunt_Ralta()
         vout_t = simular_cabo(yn_segmentos, R_curto, R_fonte, R_emissor_shunt,
                               R_falha_shunt, R_falha_serie, segmento_falha,
                               pares_falhas, terminal_fonte, fases, blindagens,
-                              armadura, v_fonte_t, tmax, nt, tempo_abre, aterrar_receptor)
+                              armadura, v_fonte_t, tmax, nt, aterrar_receptor)
         arquivo_resultados = "teste/falha_shunt_Ralta_t$(terminal_fonte).csv"
-        salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, tempo_abre,
+        salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo,
                           comprimentos, segmento_falha, pares_falhas, terminal_fonte,
                           R_emissor_shunt, R_falha_serie, R_falha_shunt, R_fonte,
                           nt_trunc, nome_condutores, aterrar_receptor)
@@ -624,9 +624,9 @@ function testar_falha_serie_Rbaixa()
         vout_t = simular_cabo(yn_segmentos, R_curto, R_fonte, R_emissor_shunt,
                               R_falha_shunt, R_falha_serie, segmento_falha,
                               pares_falhas, terminal_fonte, fases, blindagens,
-                              armadura, v_fonte_t, tmax, nt, tempo_abre, aterrar_receptor)
+                              armadura, v_fonte_t, tmax, nt, aterrar_receptor)
         arquivo_resultados = "teste/falha_serie_Rbaixa_t$(terminal_fonte).csv"
-        salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, tempo_abre,
+        salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo,
                           comprimentos, segmento_falha, pares_falhas, terminal_fonte,
                           R_emissor_shunt, R_falha_serie, R_falha_shunt, R_fonte,
                           nt_trunc, nome_condutores, aterrar_receptor)
@@ -674,9 +674,9 @@ function testar_ambas_falhas()
         vout_t = simular_cabo(yn_segmentos, R_curto, R_fonte, R_emissor_shunt,
                               R_falha_shunt, R_falha_serie, segmento_falha,
                               pares_falhas, terminal_fonte, fases, blindagens,
-                              armadura, v_fonte_t, tmax, nt, tempo_abre, aterrar_receptor)
+                              armadura, v_fonte_t, tmax, nt, aterrar_receptor)
         arquivo_resultados = "teste/falha_ambas_falhas_t$(terminal_fonte).csv"
-        salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, tempo_abre,
+        salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo,
                           comprimentos, segmento_falha, pares_falhas, terminal_fonte,
                           R_emissor_shunt, R_falha_serie, R_falha_shunt, R_fonte,
                           nt_trunc, nome_condutores, aterrar_receptor)
