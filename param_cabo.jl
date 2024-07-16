@@ -111,7 +111,7 @@ function invlaplace2(y, s, tmax, nt::Int, filtro="")
     dt = tmax / (nt - 1)
     f = zeros(nt)
     for k = 1:nt
-        f[k] = v[k] * exp(c * k * dt) / (dt)
+        f[k] = v[k] * exp(c * (k - 1) * dt) / (dt)
     end
     return f
 end
