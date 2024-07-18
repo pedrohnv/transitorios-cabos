@@ -93,9 +93,9 @@ begin  # ler parâmetros
     epsr_a = param[3, "permissividade"]  # última camada, que envolve a armadura
 
     # resistividades elétricas [Ohm.m]
-    rho_c = param[1, "condutividade"]  # condutor central
-    rho_b = param[2, "condutividade"]  # blindagem, jaqueta da veia
-    rho_a = param[3, "condutividade"]  # armadura
+    rho_c = param[1, "resistividade"]  # condutor central
+    rho_b = param[2, "resistividade"]  # blindagem, jaqueta da veia
+    rho_a = param[3, "resistividade"]  # armadura
 end
 
 
