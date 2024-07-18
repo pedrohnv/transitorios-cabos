@@ -1,16 +1,18 @@
-descrição de cada coluna:,indice_condutores,dt,nt,comprimentos,aterrar_receptor,segmento_falha,terminal_fonte,R_emissor_shunt,R_falha_serie,par_falha_1,par_falha_2,R_falha_shunt,R_fonte,R_curto,arquivo_resultados
-"indice_condutores descreve o índice (linha) correspondente a cada condutor para ser usado nas colunas seguintes. Não alterar este valor, pois ele é meramente descritivo.",1 – fase 1,2.5e-10,131072,500,FALSE,1,1,10000000,-1,1,2,-1,50,1e-09,caso_n.csv
-dt é o passo no tempo [s].,2 – blindagem 1,,,2000,TRUE,,,0.1,-1,,,,,,
-nt é o número de passos no tempo.,3 – fase 2,,,,,,,0.1,-1,,,,,,
-segmento_falha indica o segmento no qual o final está a falha.,4 – blindagem 2,,,,,,,0.1,-1,,,,,,
-aterrar_receptor vetor booleano que controla se as blindagens e armadura são aterradas no final (receptor) de cada segmento ou não.,5 – fase 3,,,,,,,0.1,-1,,,,,,
-comprimentos é um vetor que dá o comprimento dos segmentos de cabo [m],6 – blindagem 3,,,,,,,0.1,-1,,,,,,
-terminal_fonte é o índice do terminal que a fonte excita.,7 – armadura,,,,,,,0.1,-1,,,,,,
-R_emissor_shunt é o vetor de resistências no terminal emissor para Terra. Valor negativo significa resistência infinita para Terra. Não usar 0. ,,,,,,,,,,,,,,,
-R_falha_serie é o vetor de resistências série nos condutores no ponto da falha. Valor negativo significa curto-circuito (sem falha). Não usar 0. ,,,,,,,,,,,,,,,
-par_falha_1 é um vetor de índices (ver desc_indice_condutores) que indica o primeiro condutor envolvido na falha descrita pelo valor correspondente na coluna R_falha_shunt,,,,,,,,,,,,,,,
-par_falha_2 é um  vetor de índices (ver desc_indice_condutores) que indica o segundo condutor envolvido na falha descrita pelo valor correspondente na coluna R_falha_shunt,,,,,,,,,,,,,,,
-R_falha_shunt é o vetor de resistências de falha entre os condutores. Valor negativo significa curto-circuito (sem falha). Não usar 0. ,,,,,,,,,,,,,,,
-R_fonte resistência interna da fonte.,,,,,,,,,,,,,,,
-"R_curto é a resistência de curto circuito, para evitar divisão por zero. Valores muito pequenos tendem a criar instabilidade numérica.",,,,,,,,,,,,,,,
-arquivo_resultados é o caminho (nome) do arquivo no qual salvar os resultados da simulação.,,,,,,,,,,,,,,,
+descrição de cada coluna:,indice_condutores,dt,nt,comprimentos,aterrar_receptor,segmento_falha,terminal_fonte,R_emissor_shunt,R_falha_serie,par_falha_1,par_falha_2,R_falha_shunt,R_fonte,R_curto,arquivo_resultados,permissividade,condutividade
+"indice_condutores descreve o índice (linha) correspondente a cada condutor para ser usado nas colunas seguintes. Não alterar este valor, pois ele é meramente descritivo.",1 – fase 1,2.5e-10,131072,500,FALSE,1,1,10000000,-1,1,2,-1,50,1e-09,caso_n.csv,3.31,1.72E-08
+dt é o passo no tempo [s].,2 – blindagem 1,,,2000,TRUE,,,0.1,-1,,,,,,,2.3,2.20E-07
+nt é o número de passos no tempo.,3 – fase 2,,,,,,,0.1,-1,,,,,,,10,2.86E-08
+segmento_falha indica o segmento no qual o final está a falha.,4 – blindagem 2,,,,,,,0.1,-1,,,,,,,,
+aterrar_receptor vetor booleano que controla se as blindagens e armadura são aterradas no final (receptor) de cada segmento ou não.,5 – fase 3,,,,,,,0.1,-1,,,,,,,,
+comprimentos é um vetor que dá o comprimento dos segmentos de cabo [m],6 – blindagem 3,,,,,,,0.1,-1,,,,,,,,
+terminal_fonte é o índice do terminal que a fonte excita.,7 – armadura,,,,,,,0.1,-1,,,,,,,,
+R_emissor_shunt é o vetor de resistências no terminal emissor para Terra. Valor negativo significa resistência infinita para Terra. Não usar 0. ,,,,,,,,,,,,,,,,,
+R_falha_serie é o vetor de resistências série nos condutores no ponto da falha. Valor negativo significa curto-circuito (sem falha). Não usar 0. ,,,,,,,,,,,,,,,,,
+par_falha_1 é um vetor de índices (ver desc_indice_condutores) que indica o primeiro condutor envolvido na falha descrita pelo valor correspondente na coluna R_falha_shunt,,,,,,,,,,,,,,,,,
+par_falha_2 é um  vetor de índices (ver desc_indice_condutores) que indica o segundo condutor envolvido na falha descrita pelo valor correspondente na coluna R_falha_shunt,,,,,,,,,,,,,,,,,
+R_falha_shunt é o vetor de resistências de falha entre os condutores. Valor negativo significa curto-circuito (sem falha). Não usar 0. ,,,,,,,,,,,,,,,,,
+R_fonte resistência interna da fonte.,,,,,,,,,,,,,,,,,
+"R_curto é a resistência de curto circuito, para evitar divisão por zero. Valores muito pequenos tendem a criar instabilidade numérica.",,,,,,,,,,,,,,,,,
+arquivo_resultados é o caminho (nome) do arquivo no qual salvar os resultados da simulação.,,,,,,,,,,,,,,,,,
+"permissividade é a permissividade elétrica relativa dos isolantes que envolvem: fase, blindagem, armadura",,,,,,,,,,,,,,,,,
+"condutividade é a condutividade elétrica [Ohm*m] dos condutores: fase, blindagem, armadura",,,,,,,,,,,,,,,,,

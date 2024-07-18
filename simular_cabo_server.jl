@@ -18,14 +18,14 @@ begin
     theta_jk = (2 * pi) / 3  # ângulo entre cabos do umbilical
 
     # permissividades elétricas
-    epsr_c = 3.31  # condutor central
-    epsr_b = 2.3  # blindagem, jaqueta da veia
-    epsr_a = 10  # última camada, que envolve a armadura
+    #epsr_c = 3.31  # condutor central
+    #epsr_b = 2.3  # blindagem, jaqueta da veia
+    #epsr_a = 10  # última camada, que envolve a armadura
 
     # resistividades elétricas [Ohm.m]
-    rho_c = 1.7241e-8  # condutor central
-    rho_b = 2.2e-7  # blindagem, jaqueta da veia
-    rho_a = 2.86e-8  # armadura
+    #rho_c = 1.7241e-8  # condutor central
+    #rho_b = 2.2e-7  # blindagem, jaqueta da veia
+    #rho_a = 2.86e-8  # armadura
 
     mur_a = 300  # permeabilidade magnética relativa da armadura
     sig_s = 5.0  # condutividade elétrica do mar [S/m]
@@ -86,6 +86,16 @@ begin  # ler parâmetros
         pares_falhas[i] = [param[i, "par_falha_1"], param[i, "par_falha_2"]]
     end
     arquivo_resultados = param[1, "arquivo_resultados"]
+
+    # permissividades elétricas
+    epsr_c = param[1, "permissividade"]  # condutor central
+    epsr_b = param[2, "permissividade"]  # blindagem, jaqueta da veia
+    epsr_a = param[3, "permissividade"]  # última camada, que envolve a armadura
+
+    # resistividades elétricas [Ohm.m]
+    rho_c = param[1, "condutividade"]  # condutor central
+    rho_b = param[2, "condutividade"]  # blindagem, jaqueta da veia
+    rho_a = param[3, "condutividade"]  # armadura
 end
 
 
