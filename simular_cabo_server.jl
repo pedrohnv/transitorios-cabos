@@ -1,6 +1,5 @@
 #= Simular um cabo umbilical. Parâmetros lidos de um arquivo CSV. =#
 using HDF5
-using Parameters
 using CSV, DataFrames
 
 include("param_cabo.jl");
@@ -110,8 +109,7 @@ end
 
 # %% Cálculos
 arquivo_matrizes = "umbilical_tripolar.h5"
-lk = ReentrantLock()
-@lock lk precalc_matrizes(arquivo_matrizes, comprimentos, tmax, nt, rc, ra, rho_a, rho_b, rho_c, epsr_a, epsr_b, epsr_c, mur_a, theta_jk, di, sig_s, eps_s, nx)
+precalc_matrizes(arquivo_matrizes, comprimentos, tmax, nt, rc, ra, rho_a, rho_b, rho_c, epsr_a, epsr_b, epsr_c, mur_a, theta_jk, di, sig_s, eps_s, nx)
 
 # Carregar matrizes YN
 sk, v_fonte_s = laplace(v_fonte_t, tmax, nt)
@@ -120,8 +118,8 @@ yn_comprimentos = zeros(ComplexF64, (nc2, nc2, nf, num_comprimentos))
 for k = 1:num_comprimentos
     L1 = comprimentos[k]
     nome = "yn_" * string(round(L1, sigdigits=2))
-    @lock lk yn_comprimentos[:,:,:,k] .= reshape(h5read(arquivo_matrizes, nome), (nc2, nc2, nf))
+    yn_comprimentos[:,:,:,k] .= reshape(h5read(arquivo_matrizes, nome), (nc2, nc2, nf))
 end
 
 vout_t = simular_cabo(yn_comprimentos, R_curto, R_fonte, R_emissor_shunt, R_falha_shunt, R_falha_serie, segmento_falha, pares_falhas, terminal_fonte, fases, blindagens, armadura, v_fonte_t, tmax, nt, aterrar_receptor)
-@lock lk salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, comprimentos, segmento_falha, pares_falhas, terminal_fonte, R_emissor_shunt, R_falha_serie, R_falha_shunt, R_fonte, nt_trunc, nome_condutores, aterrar_receptor)
+salvar_resultados(arquivo_resultados, vout_t, v_fonte_t, tempo, comprimentos, segmento_falha, pares_falhas, terminal_fonte, R_emissor_shunt, R_falha_serie, R_falha_shunt, R_fonte, nt_trunc, nome_condutores, aterrar_receptor)
