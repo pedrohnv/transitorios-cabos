@@ -132,14 +132,15 @@ Parâmetros
     epsr_b : permissividade elétrica relativa da capa externa, jaqueta, da blindagem da veia
     mur_c : permeabilidade magnética relativa do condutor central.
     mur_b : permeabilidade magnética relativa da capa externa, jaqueta, da blindagem da veia.
-    
+    td1 : tangente de perdas do dielétrico 1
+    td2 : tangente de perdas do dielétrico 2
 
 Retorna
 -------
     Z : matriz de impedância longitudinal [Ohm/m]
     Y : matriz de admitância transversal [S/m]
 """
-function cZYcbi(w, rc, rho_c, rho_b, epsr_c, epsr_b, mur_c=1, mur_b=1)
+function cZYcbi(w, rc, rho_c, rho_b, epsr_c, epsr_b, mur_c=1, mur_b=1, td1=0.0001, td2=0.0004)
     jwu0 = 1.0im * w * mu_0
     jwu0_2pi = jwu0 / (2 * pi)
     etac = sqrt((jwu0 * mur_c) / rho_c)
@@ -160,15 +161,19 @@ function cZYcbi(w, rc, rho_c, rho_b, epsr_c, epsr_b, mur_c=1, mur_b=1)
     end
     num2 = (besselix(0, eta2) * besselkx(1, eta1)) + (besselix(1, eta1) * besselkx(0, eta2)) * escala
     z5 = (rho_b * etab) / (2 * pi * rc[3]) * num2 / den
-    
     z6 = jwu0_2pi * log(rc[4] / rc[3])
     Z = zeros(ComplexF64, (2,2))
     Z[1,1] = z1 + z2 + z3 + z5 + z6 - 2 * z4
     Z[1,2] = z5 + z6 - z4
     Z[2,1] = z5 + z6 - z4
     Z[2,2] = z5 + z6
+    # g não depende da frequência pois o valor de td é obtido por ensaios em uma frequência
     y1 = 1.0im * w * 2 * pi * (epsr_c * epsilon_0) / log(rc[2] / rc[1])
     y2 = 1.0im * w * 2 * pi * (epsr_b * epsilon_0) / log(rc[4] / rc[3])
+    g1 = td1 * 120 * pi^2 * (epsr_c * epsilon_0) / log(rc[2] / rc[1])
+    g2 = td1 * 120 * pi^2 * (epsr_c * epsilon_0) / log(rc[2] / rc[1])
+    y1 = 1.0im * w * 2 * pi * (epsr_c * epsilon_0) / log(rc[2] / rc[1]) + g1
+    y2 = 1.0im * w * 2 * pi * (epsr_b * epsilon_0) / log(rc[4] / rc[3]) + g2
     Y = zeros(ComplexF64, (2,2))
     Y[1,1] = y1
     Y[1,2] = -y1
