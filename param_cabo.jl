@@ -6,8 +6,8 @@ using LinearAlgebra
 using HDF5
 using CSV, DataFrames
 
-const mu_0 = 4e-7 * pi  # permeabilidade magnética do vácuo
-const epsilon_0 = 8.8541878128e-12  # permissividade elétrica
+const MU_0 = 4e-7 * pi  # permeabilidade magnética do vácuo
+const EPSILON_0 = 8.8541878128e-12  # permissividade elétrica
 
 # %% Parâmetros dos cabos
 
@@ -33,7 +33,7 @@ Retorna
     Y : matriz de admitância transversal [S/m]
 """
 function cZYcbi(w, rc, rho_c, rho_b, epsr_c, epsr_b, mur_c=1, mur_b=1, td1=0.0001, td2=0.0004)
-    jwu0 = 1.0im * w * mu_0
+    jwu0 = 1.0im * w * MU_0
     jwu0_2pi = jwu0 / (2 * pi)
     etac = sqrt((jwu0 * mur_c) / rho_c)
     etab = sqrt((jwu0 * mur_b) / rho_b)
@@ -60,12 +60,12 @@ function cZYcbi(w, rc, rho_c, rho_b, epsr_c, epsr_b, mur_c=1, mur_b=1, td1=0.000
     Z[2,1] = z5 + z6 - z4
     Z[2,2] = z5 + z6
     # g não depende da frequência pois o valor de td é obtido por ensaios em uma frequência
-    y1 = 1.0im * w * 2 * pi * (epsr_c * epsilon_0) / log(rc[2] / rc[1])
-    y2 = 1.0im * w * 2 * pi * (epsr_b * epsilon_0) / log(rc[4] / rc[3])
-    g1 = td1 * 120 * pi^2 * (epsr_c * epsilon_0) / log(rc[2] / rc[1])
-    g2 = td1 * 120 * pi^2 * (epsr_c * epsilon_0) / log(rc[2] / rc[1])
-    y1 = 1.0im * w * 2 * pi * (epsr_c * epsilon_0) / log(rc[2] / rc[1]) + g1
-    y2 = 1.0im * w * 2 * pi * (epsr_b * epsilon_0) / log(rc[4] / rc[3]) + g2
+    y1 = 1.0im * w * 2 * pi * (epsr_c * EPSILON_0) / log(rc[2] / rc[1])
+    y2 = 1.0im * w * 2 * pi * (epsr_b * EPSILON_0) / log(rc[4] / rc[3])
+    g1 = td1 * 120 * pi^2 * (epsr_c * EPSILON_0) / log(rc[2] / rc[1])
+    g2 = td1 * 120 * pi^2 * (epsr_c * EPSILON_0) / log(rc[2] / rc[1])
+    y1 = 1.0im * w * 2 * pi * (epsr_c * EPSILON_0) / log(rc[2] / rc[1]) + g1
+    y2 = 1.0im * w * 2 * pi * (epsr_b * EPSILON_0) / log(rc[4] / rc[3]) + g2
     Y = zeros(ComplexF64, (2,2))
     Y[1,1] = y1
     Y[1,2] = -y1
@@ -98,7 +98,7 @@ function cZPpipein(w, mur_a, rho_a, epsr_ae, theta_jk, rc, ra, di)
     nn = 24
     re = rc[4]
     rp1 = ra[1]
-    y1 = rp1 * sqrt((1im * mu_0 * mur_a * w) / rho_a)
+    y1 = rp1 * sqrt((1im * MU_0 * mur_a * w) / rho_a)
     q = zeros(ComplexF64, (length(di), length(di)))
     for linha = 1:length(di)
         for coluna = 1:length(di)
@@ -122,7 +122,7 @@ function cZPpipein(w, mur_a, rho_a, epsr_ae, theta_jk, rc, ra, di)
             end
         end
     end
-    zpp = @. ((1im * mu_0 * w) * (q + mur_a / y1 * besselkx(0, y1) / besselkx(1, y1))) / (2 * pi)
+    zpp = @. ((1im * MU_0 * w) * (q + mur_a / y1 * besselkx(0, y1) / besselkx(1, y1))) / (2 * pi)
     auxZ = zeros(ComplexF64, size(zpp) .* ncx)
     for linha = 0:(size(zpp)[1] - 1)
         i1 = (linha) * ncx + 1
@@ -156,7 +156,7 @@ function cZPpipein(w, mur_a, rho_a, epsr_ae, theta_jk, rc, ra, di)
             end
         end          
     end
-    ppp = qp / (2 * pi * epsilon_0 * epsr_ae)
+    ppp = qp / (2 * pi * EPSILON_0 * epsr_ae)
     auxP = zeros(ComplexF64, size(ppp) .* ncx)
     for linha = 0:(size(ppp)[1] - 1)
         i1 = (linha) * ncx + 1
@@ -196,7 +196,7 @@ function cZPpipe(w, ra, mur_a, rho_a, epsr_ae)
     ncx = 2  # número de condutores "ativos" em cada cabo SC (single core)
     rae = ra[2]
     rai = ra[1]
-    ma = sqrt((1.0im * w * mu_0 * mur_a) / rho_a)
+    ma = sqrt((1.0im * w * MU_0 * mur_a) / rho_a)
     eta_i = ma * rai
     eta_e = ma * rae
     escala = exp(abs(real(eta_i)) - eta_e - abs(real(eta_e)) + eta_i)  # si/se
@@ -212,7 +212,7 @@ function cZPpipe(w, ra, mur_a, rho_a, epsr_ae)
         zam = rho_a / (2 * pi * rai * rae * den * se)
     end
     rf = ra[3]
-    zins = ((1.0im * w * mu_0) / (2 * pi)) * log(rf / rae)
+    zins = ((1.0im * w * MU_0) / (2 * pi)) * log(rf / rae)
     zc1 = zai + zae - 2*zam + zins
     zc2 = zae - zam + zins
     zc3 = zae + zins
@@ -227,7 +227,7 @@ function cZPpipe(w, ra, mur_a, rho_a, epsr_ae)
     Zpipe[1:6, 7] .= zc2
     Zpipe[7, 7] = zc3
     # Zpipe= [Zp Zp Zp zc2 Zp Zp Zp zc2 Zp Zp Zp zc2 zc2 zc2 zc2 zc3]
-    pins = log(rf / rae) / (2 * pi * epsilon_0 * epsr_ae)
+    pins = log(rf / rae) / (2 * pi * EPSILON_0 * epsr_ae)
     n = 3 * ncx + 1
     Ppipe = pins * ones((n, n))
     return Zpipe, Ppipe
@@ -249,7 +249,7 @@ Retorna
 """
 function cZmar(w, rca, sigma=5.0, epsr=81.0)
     rho = 1.0 / sigma
-    eta = sqrt(1.0im * w * mu_0 * (sigma + 1.0im * w * epsilon_0 * epsr))
+    eta = sqrt(1.0im * w * MU_0 * (sigma + 1.0im * w * EPSILON_0 * epsr))
     Zmar = eta * rho / (2 * pi * rca) * besselkx(0, eta * rca) / besselkx(1, eta * rca)
     return Zmar
 end
