@@ -289,6 +289,10 @@ function interpretar_elemento(
         if tipo == "V" || tipo == "I"
             val, s = laplace(fill(v, nt), tmax, nt)
         else
+            if v <= 0.0
+                msg = "Valor de $(nome) deve ser positivo."
+                throw(error(msg))
+            end
             val = fill(v, nf)
         end
     end

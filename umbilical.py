@@ -81,7 +81,8 @@ with open(netlist_file, "w", encoding="utf8") as file:
         file.write(e + "\n")
 
 # inserir uma falha é fácil: basta alterar o R da emenda defeituosa
-# ou colocar um resistor conectando dois terminais quaisquer
+# ou colocar um resistor (R > 0) conectando dois terminais quaisquer
+# ou, ainda, uma fonte de tensão nula.
 
 # %% Calcular YN dos segmentos
 ## Geometria do umbilical tripolar
