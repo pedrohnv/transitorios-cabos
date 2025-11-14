@@ -5,7 +5,7 @@
 
 using SpecialFunctions
 
-# Physical constants
+const TOL = 1e-6  # tolerance for geometric tests
 const μ₀ = 4e-7 * pi  # vacuum magnetic permeability [H/m]
 
 # ==============================================================================
@@ -462,19 +462,19 @@ function comp_coaxial_cable_impedance(
     complex_frequency::Complex{T},
 ) where {T <: Real}
     # number of conductors
-    Nc = length(cable.design_data.components)
+    Nc = count_conductors_cable(cable)
     Z = zeros(Complex{T}, Nc, Nc)
 
     # There is a recursive relation:
     # -ΔV[i + 1]/Δx = z_loop * I_loop[i + 1] - z_mutual_io * I_loop[i]
     for i = 1:Nc
-        comp = cable.design_data.components[i]
-        rho_c = comp.conductor_props.rho
-        mur_c = comp.conductor_props.mu_r
-        radius_in = comp.conductor_group.radius_in
-        radius_ext = comp.conductor_group.radius_ext
-        radius_ext_insulator = comp.insulator_group.radius_ext
-        mur_d = comp.insulator_props.mu_r
+        comp = cable.components[i]
+        rho_c = comp.rho_c
+        mur_c = comp.mur_c
+        radius_in = comp.radius_in
+        radius_ext = comp.radius_ext
+        radius_ext_insulator = comp.radius_ext_insulator
+        mur_d = comp.mur_c
         
         z_inner = calc_inner_skin_effect_impedance(
             radius_in,
@@ -678,12 +678,27 @@ function comp_cable_impedance_recursive!(
 end
 
 
-"""Compute the series impedance matrix of a cable system at the given complex frequency in rad/s."""
+"""Compute the series impedance matrix of a cable system at the given frequencies of interest in rad/s.
+
+A PipeCable and the components of a CoaxialCable receive an `_index`
+attribute mapping the conductor to the matrix position.
+
+# Parameters
+
+- `cable_system`: The outermost cable.
+- `complex_frequencies`: List of `Nf` complex angular frequencies `s = c + jω` [rad/s].
+- `sigma_mar`: Permissividade elétrica do mar [S/m]. Use `nothing` para ignorar o mar.
+- `epsr_mar`: Permissividade elétrica do mar.
+
+Returns
+-------
+- `Z`: Impedance matrix of shape (Nc, Nc, Nf).
+"""
 function comp_cable_system_impedance(
     cable_system::PipeCable,
     complex_frequency::Complex{T},
-    sigma_mar::Real = 5.0,
-    epsr_mar::Real = 81.0,
+    sigma_mar::Union{Real, Nothing} = 5.0,
+    epsr_mar::Union{Real, Nothing} = 81.0,
 ) where {T <: Real}
     Nc = count_conductors_cable(cable_system)
     Z = zeros(Complex{T}, Nc, Nc)
@@ -693,7 +708,8 @@ function comp_cable_system_impedance(
     end
 
     if !isnothing(sigma_mar)
-        Z[:, :, k] += cZmar(jω, rca, sigma_mar, epsr_mar)
+        rca = outer_radius(cable_system)
+        Z .+= cZmar(complex_frequency, rca, sigma_mar, epsr_mar)
     end
 
     return Z
@@ -712,7 +728,7 @@ end
 
 # Retorna
 
-- `Z`: impedância do mar [Ω/m].
+- `z`: impedância do mar [Ω/m].
 """
 function cZmar(
     freq_s::Complex{T},
@@ -725,7 +741,7 @@ function cZmar(
     end
     jw = freq_s
     rho = 1.0 / sigma
-    eta = sqrt(jw * mu_0 * (sigma + jw * epsilon_0 * epsr))
+    eta = sqrt(jw * μ₀ * (sigma + jw * ε₀ * epsr))
     Zmar = eta * rho / (2 * pi * rca) * besselkx(0, eta * rca) / besselkx(1, eta * rca)
     return Zmar
 end
