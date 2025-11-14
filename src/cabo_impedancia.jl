@@ -1,4 +1,14 @@
 # ==============================================================================
+# Longitudinal impedance Z per unit length in frequency-domain 
+# of Single-Core (coaxial) and Pipe-Type cables.
+# ==============================================================================
+
+using SpecialFunctions
+
+# Physical constants
+const μ₀ = 4e-7 * pi  # vacuum magnetic permeability [H/m]
+
+# ==============================================================================
 # Calculation functions (individual formulas)
 # ==============================================================================
 
@@ -21,14 +31,13 @@ where ``w_1 = r_1 \\sqrt{j \\omega \\mu \\sigma}``, ``w_2 = r_2 \\sqrt{j \\omega
 - `simplified_formula`: use a simplified formula?
 """
 function calc_inner_skin_effect_impedance(
-    radius_in::T,
-    radius_ext::T,
-    rho_c::T,
-    mur_c::T,
-    complex_frequency::Complex;
-    simplified_formula=false,
-)
-
+    radius_in::Real,
+    radius_ext::Real,
+    rho_c::Real,
+    mur_c::Real,
+    complex_frequency::Complex{T},
+    simplified_formula::Bool = false,
+) where {T <: Real}
     iszero(radius_in) && return 0.0
 
     # Constants
@@ -92,14 +101,13 @@ where ``w_1 = r_1 \\sqrt{j \\omega \\mu \\sigma}``, ``w_2 = r_2 \\sqrt{j \\omega
 - `simplified_formula`: use a simplified formula?
 """
 function calc_outer_skin_effect_impedance(
-    radius_in::T,
-    radius_ext::T,
-    rho_c::T,
-    mur_c::T,
-    complex_frequency::Complex;
-    simplified_formula=false,
-)
-
+    radius_in::Real,
+    radius_ext::Real,
+    rho_c::Real,
+    mur_c::Real,
+    complex_frequency::Complex{T},
+    simplified_formula::Bool = false,
+) where {T <: Real}
     # Constants
     mu_c = μ₀ * mur_c
     sigma_c = 1.0 / rho_c
@@ -174,14 +182,13 @@ where ``w_1 = r_1 \\sqrt{j \\omega \\mu \\sigma}``, ``w_2 = r_2 \\sqrt{j \\omega
 - `simplified_formula`: use a simplified formula?
 """
 function calc_mutual_skin_effect_impedance(
-    radius_in::T,
-    radius_ext::T,
-    rho_c::T,
-    mur_c::T,
-    complex_frequency::Complex;
-    simplified_formula=false,
-)
-
+    radius_in::Real,
+    radius_ext::Real,
+    rho_c::Real,
+    mur_c::Real,
+    complex_frequency::Complex{T},
+    simplified_formula::Bool = false,
+) where {T <: Real}
     if iszero(radius_in)
         return calc_outer_skin_effect_impedance(
             radius_in,
@@ -246,12 +253,11 @@ where ``w_1 = r_1 \\sqrt{j \\omega \\mu \\sigma}``, ``w_2 = r_2 \\sqrt{j \\omega
 - `simplified_formula`: use a simplified formula?
 """
 function calc_tubular_capacitor_impedance(
-    radius_in::T,
-    radius_ext::T,
-    mur_ins::T,
-    complex_frequency::Complex,
-)
-
+    radius_in::Real,
+    radius_ext::Real,
+    mur_ins::Real,
+    complex_frequency::Complex{T},
+) where {T <: Real}
     if iszero(radius_in)
         return calc_outer_skin_effect_impedance(
             radius_in,
@@ -309,19 +315,18 @@ Note that ``\\sum_{n=1}^{\\infty} \\frac{C_n}{n}`` has a closed formula solution
 - `tol`: tolerance to check for convergence of the infinite series.
 """
 function calc_pipe_mutual_internal_impedance(
-    distance_1::T,
-    distance_2::T,
-    theta::T,
-    radius_1::T,
-    radius_2::T,
-    radius_in::T,
-    rho_c::T,
-    mur_pipe::T,
-    complex_frequency::Complex;
+    distance_1::Real,
+    distance_2::Real,
+    theta::Real,
+    radius_1::Real,
+    radius_2::Real,
+    radius_in::Real,
+    rho_c::Real,
+    mur_pipe::Real,
+    complex_frequency::Complex{T},
     maxiter::Int = 100,
-    tol = 1e-12,
-)
-
+    tol::Real = 1e-12,
+) where {T <: Real}
     sigma_c = 1.0 / rho_c
 
     r1 = radius_in
@@ -422,16 +427,15 @@ and ``I_\\nu`` and ``K_\\nu`` are the modified Bessel functions of the first and
 - `tol`: tolerance to check for convergence of the infinite series.
 """
 function calc_pipe_self_internal_impedance(
-    distance_1::T,
-    radius_1::T,
-    radius_in::T,
-    rho_c::T,
-    mur_pipe::T,
-    complex_frequency::Complex;
+    distance_1::Real,
+    radius_1::Real,
+    radius_in::Real,
+    rho_c::Real,
+    mur_pipe::Real,
+    complex_frequency::Complex{T},
     maxiter::Int = 100,
-    tol = 1e-12,
-)
-
+    tol::Real = 1e-12,
+) where {T <: Real}
     return calc_pipe_mutual_internal_impedance(
         distance_1,
         distance_1,
@@ -441,9 +445,9 @@ function calc_pipe_self_internal_impedance(
         radius_in,
         rho_c,
         mur_pipe,
-        complex_frequency;
-        maxiter = maxiter,
-        tol = tol,
+        complex_frequency,
+        maxiter,
+        tol,
     )
 end
 
@@ -454,13 +458,12 @@ end
 
 """Compute the series impedance matrix of a coaxial cable at the given complex frequency in rad/s."""
 function comp_coaxial_cable_impedance(
-    cable::CablePosition,
-    complex_frequency::Complex,
-)
-
+    cable::CoaxialCable,
+    complex_frequency::Complex{T},
+) where {T <: Real}
     # number of conductors
     Nc = length(cable.design_data.components)
-    Z = zeros(Complex, Nc, Nc)
+    Z = zeros(Complex{T}, Nc, Nc)
 
     # There is a recursive relation:
     # -ΔV[i + 1]/Δx = z_loop * I_loop[i + 1] - z_mutual_io * I_loop[i]
@@ -527,11 +530,10 @@ It does NOT compute the internal impedance of the inner conductors.
 """
 function comp_pipe_cable_impedance(
     pipecable::PipeCable,
-    complex_frequency::Complex,
-)
-    
-    Nc = count_conductors_abstract_cable(pipecable)
-    Z = zeros(Complex, Nc, Nc)
+    complex_frequency::Complex{T},
+) where {T <: Real}
+    Nc = count_conductors_cable(pipecable)
+    Z = zeros(Complex{T}, Nc, Nc)
 
     z_inner = calc_inner_skin_effect_impedance(
         pipecable.radius_in,
@@ -593,7 +595,7 @@ function comp_pipe_cable_impedance(
         )
 
         i1 = next_index_i
-        i2 = i1 + count_conductors_abstract_cable(cable_i) - 1
+        i2 = i1 + count_conductors_cable(cable_i) - 1
         Z[i1:i2, i1:i2] .+= zm_ii
         next_index_i = i2 + 1
         
@@ -625,7 +627,7 @@ function comp_pipe_cable_impedance(
             )
 
             k1 = next_index_k
-            k2 = k1 + count_conductors_abstract_cable(cable_k) - 1
+            k2 = k1 + count_conductors_cable(cable_k) - 1
             Z[i1:i2, k1:k2] .+= zm_ik
             Z[k1:k2, i1:i2] .= Z[i1:i2, k1:k2]
             next_index_k = k2 + 1
@@ -647,13 +649,12 @@ end
 - `next_index`: index in the impedance matrix after the computation.
 """
 function comp_cable_impedance_recursive!(
-    Z::Matrix{Complex},
+    Z::Matrix{Complex{T}},
     cable::AbstractCable,
-    complex_frequency::Complex,
+    complex_frequency::Complex{T},
     start_index::Int,
 ) where {T <: Real}
-
-    n = count_conductors_abstract_cable(cable)
+    n = count_conductors_cable(cable)
     end_index = start_index + n - 1
     if cable isa CoaxialCable
         Z_coaxial = comp_coaxial_cable_impedance(cable, complex_frequency)
@@ -672,7 +673,7 @@ function comp_cable_impedance_recursive!(
     else
         @error "Unrecognized cable type `$(typeof(cable))`."
     end
-    
+
     return start_index + n
 end
 
@@ -680,15 +681,51 @@ end
 """Compute the series impedance matrix of a cable system at the given complex frequency in rad/s."""
 function comp_cable_system_impedance(
     cable_system::PipeCable,
-    complex_frequency::Complex,
-)
-
+    complex_frequency::Complex{T},
+    sigma_mar::Real = 5.0,
+    epsr_mar::Real = 81.0,
+) where {T <: Real}
     Nc = count_conductors_cable(cable_system)
-    Z = zeros(Complex, Nc, Nc)
+    Z = zeros(Complex{T}, Nc, Nc)
     current_index = 1
     for cable in cable_system.cables
         current_index = comp_cable_impedance_recursive!(Z, cable, complex_frequency, current_index)
     end
-    # TODO Add z_soil (Carson, Deri, etc)
+
+    if !isnothing(sigma_mar)
+        Z[:, :, k] += cZmar(jω, rca, sigma_mar, epsr_mar)
+    end
+
     return Z
+end
+
+
+"""Impedância de retorno pelo mar.
+
+# Parâmetros
+
+- `freq_s`: Frequência angular complexa no formato `c + jw` [rad/s].
+- `rca`: Raio da capa externa da armadura [m].
+- `sigma`: Permissividade elétrica do mar [S/m]. O padrão é `5.0`.
+    Use `nothing` para ignorar o mar.
+- `epsr`: Permissividade elétrica do mar. O padrão é `81.0`.
+
+# Retorna
+
+- `Z`: impedância do mar [Ω/m].
+"""
+function cZmar(
+    freq_s::Complex{T},
+    rca::Real,
+    sigma::Real = 5.0,
+    epsr::Real = 81.0,
+) where {T <: Real}
+    if isnothing(sigma) || isnothing(epsr)
+        return 0.0
+    end
+    jw = freq_s
+    rho = 1.0 / sigma
+    eta = sqrt(jw * mu_0 * (sigma + jw * epsilon_0 * epsr))
+    Zmar = eta * rho / (2 * pi * rca) * besselkx(0, eta * rca) / besselkx(1, eta * rca)
+    return Zmar
 end

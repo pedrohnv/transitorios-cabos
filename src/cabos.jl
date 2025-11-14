@@ -2,7 +2,13 @@
 
 """Dicionário do objeto."""
 function struct_to_dict(s)
-    d = Dict(string(key) => getfield(s, key) for key in propertynames(s))
+    d = Dict{String, Any}()
+    for key in propertynames(s)
+        # Skip private fields (those starting with _)
+        if !startswith(string(key), "_")
+            d[string(key)] = getfield(s, key)
+        end
+    end
     d["tipo"] = string(typeof(s))
     return d
 end
@@ -12,7 +18,15 @@ end
 function struct_from_dict(d::Dict{String, Any})
     tipo = d["tipo"]
     T = eval(Symbol(tipo))
-    vals = [d[string(f)] for f in fieldnames(T)]
+    #vals = [d[string(f)] for f in fieldnames(T)]
+    vals = []
+    for f in fieldnames(T)
+        # Skip private fields (those starting with _)
+        key = string(f)
+        if !startswith(key, "_")
+            push!(vals, d[key])
+        end
+    end
     c = T(vals...)
     return c
 end
@@ -20,13 +34,13 @@ end
 
 """Um cabo abstrato deve conter.
 
-Atributos
----------
-- x: Posição horizontal [m].
-- y: Posição vertical [m].
-- name: Identificação do objeto.
-- cable_length: Comprimento do cabo [m].
-- _index: Atributo privado: índice interno do condutor.
+# Atributos
+
+- `x`: Posição horizontal [m].
+- `y`: Posição vertical [m].
+- `name`: Identificação do objeto.
+- `cable_length`: Comprimento do cabo [m].
+- `_index`: Atributo privado: índice interno do condutor.
 """
 abstract type AbstractCable end
 
@@ -60,16 +74,16 @@ end
 
 Ele é composto por condutor tubular e um isolante externo.
 
-Atributos
----------
-- radius_in: Raio interno do condutor [m]. Use zero se sólido.
-- radius_ext: Raio externo do condutor [m].
-- radius_ext_insulator: Raio externo do isolante [m].
-- rho_c: Resistividade elétrica do condutor em Ω/m.
-- mur_c: Permeabilidade magnética relativa do condutor.
-- mur_d: Permeabilidade magnética relativa do isolante.
-- epsr: Permissividade elétrica relativa do isolante.
-- name: Identificação do objeto.
+# Atributos
+
+- `radius_in`: Raio interno do condutor [m]. Use zero se sólido.
+- `radius_ext`: Raio externo do condutor [m].
+- `radius_ext_insulator`: Raio externo do isolante [m].
+- `rho_c`: Resistividade elétrica do condutor em Ω/m.
+- `mur_c`: Permeabilidade magnética relativa do condutor.
+- `mur_d`: Permeabilidade magnética relativa do isolante.
+- `epsr`: Permissividade elétrica relativa do isolante.
+- `name`: Identificação do objeto.
 """
 mutable struct CableComponent
     radius_in::Float64
@@ -132,13 +146,13 @@ end
 
 Ele é composto por camadas de ComponenteCabo e uma posição (x,y).
 
-Atributos
----------
-- components: Lista de CableComponent que compõe o cabo, do mais interno ao mais externo.
-- x: Posição horizontal [m].
-- y: Posição vertical [m].
-- name: Identificação do objeto.
-- cable_length: Comprimento do cabo [m].
+# Atributos
+
+- `components`: Lista de CableComponent que compõe o cabo, do mais interno ao mais externo.
+- `x`: Posição horizontal [m].
+- `y`: Posição vertical [m].
+- `name`: Identificação do objeto.
+- `cable_length`: Comprimento do cabo [m].
 """
 mutable struct CoaxialCable <: AbstractCable
     components::Vector{CableComponent}
@@ -211,24 +225,24 @@ end
 Ele é composto por isolante interno, condutor, isolante externo,
 uma posição (x,y) e outros cables que podem ser ou Pipe ou Coaxial.
 
-Atributos
----------
-- radius_in: Raio interno do condutor [m]. Use zero se sólido.
-- radius_ext: Raio externo do condutor [m].
-- radius_ext_insulator: Raio externo do isolante [m].
-- rho_c: Resistividade elétrica do condutor em Ω/m.
-- mur_c: Permeabilidade magnética relativa do condutor.
-- mur_d_in: Permeabilidade magnética relativa do isolante interno.
-- mur_d_ext: Permeabilidade magnética relativa do isolante externo.
-- epsr_in: Permissividade elétrica relativa do isolante interno.
-- epsr_ext: Permissividade elétrica relativa do isolante externo.
-- cables: Lista de cables dentro do Pipe.
-- x: Posição horizontal [m].
-- y: Posição vertical [m].
-- name: Identificação do objeto.
-- sigma_medium: Condutividade do meio externo [S/m].
-- epsr_medium: Permissividade elétrica relativa do meio externo.
-- cable_length: Comprimento do cabo [m].
+# Atributos
+
+- `radius_in`: Raio interno do condutor [m]. Use zero se sólido.
+- `radius_ext`: Raio externo do condutor [m].
+- `radius_ext_insulator`: Raio externo do isolante [m].
+- `rho_c`: Resistividade elétrica do condutor em Ω/m.
+- `mur_c`: Permeabilidade magnética relativa do condutor.
+- `mur_d_in`: Permeabilidade magnética relativa do isolante interno.
+- `mur_d_ext`: Permeabilidade magnética relativa do isolante externo.
+- `epsr_in`: Permissividade elétrica relativa do isolante interno.
+- `epsr_ext`: Permissividade elétrica relativa do isolante externo.
+- `cables`: Lista de cables dentro do Pipe.
+- `x`: Posição horizontal [m].
+- `y`: Posição vertical [m].
+- `name`: Identificação do objeto.
+- `sigma_medium`: Condutividade do meio externo [S/m].
+- `epsr_medium`: Permissividade elétrica relativa do meio externo.
+- `cable_length`: Comprimento do cabo [m].
 """
 mutable struct PipeCable <: AbstractCable
     radius_in::Float64
@@ -272,16 +286,14 @@ mutable struct PipeCable <: AbstractCable
         cobj = deepcopy(collect(cables))
 
         # Validar raios
-        for (i, cabo) in pairs(cobj)
-            if i > 1
-                r1 = outer_radius(cabo)
-                d1 = hypot(cabo.x, cabo.y)
-                d2 = d1 + r1
-                if d2 > radius_in
-                    throw(ValueError(
-                        "O cabo[$(i)], $(cabo.name), está fora do Pipe."
-                    ))
-                end
+        for (i, cabo) in enumerate(cobj)
+            r1 = outer_radius(cabo)
+            d1 = hypot(cabo.x, cabo.y)
+            d2 = d1 + r1
+            if d2 > radius_in
+                throw(ArgumentError(
+                    "O cabo[$(i)], $(cabo.name), está fora do Pipe."
+                ))
             end
         end
 
@@ -340,14 +352,14 @@ end
 
 """Desloca em `(dx, dy)` as coordenadas do cabo e todos seus cabos internos."""
 function move_group(pc::PipeCable, dx::Real, dy::Real)
-    pc.x += float(dx)
-    pc.y += float(dy)
+    pc.x += dx
+    pc.y += dy
     for c in pc.cables
         if c isa PipeCable
             move_group(c, dx, dy)
-        elseifc isa CoaxialCable
-            c.x += float(dx)
-            c.y += float(dy)
+        elseif c isa CoaxialCable
+            c.x += dx
+            c.y += dy
         end
     end
 end
