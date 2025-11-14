@@ -2,6 +2,7 @@
 
 using LinearAlgebra
 
+include("cabos.jl")
 include("cabo_admitancia.jl")
 include("cabo_impedancia.jl")
 
@@ -18,23 +19,18 @@ include("cabo_impedancia.jl")
 # Retorna
 
 - `Z`: Matriz de impedância longitudinal por unidade de comprimento \\[Ω/m\\].
-    Dimensões (N condutores, N condutores).
+    Dimensões (N condutores, N condutores, K frequências).
 - `Y`: Matriz de admitância transversal por unidade de comprimento \\[S/m\\].
-    Dimensões (N condutores, N condutores).
+    Dimensões (N condutores, N condutores, K frequências).
 """
 function zy_cabo(
     cable_system::PipeCable,
-    complex_frequencies::Vector{<:Complex{T}},
-    sigma_mar::Real = 5.0,
-    epsr_mar::Real = 81.0,
+    complex_frequencies::AbstractVector{<:Complex{T}},
+    sigma_mar::Union{Real, Nothing} = 5.0,
+    epsr_mar::Union{Real, Nothing} = 81.0,
 ) where {T <: Real}
     Y = comp_cable_system_admittance(cable_system, complex_frequencies)
-    Z = similar(Y)
-    for (k, jw) in enumerate(complex_frequencies)
-        Z[:, :, k] = comp_cable_system_impedance(
-            cable_system, jw, sigma_mar, epsr_mar
-        )
-    end
+    Z = comp_cable_system_impedance(cable_system, complex_frequencies, sigma_mar, epsr_mar)
     return Z, Y
 end
 
@@ -89,13 +85,16 @@ end
 
 # Parâmetros
 
-- `Z`: Matriz de impedância longitudinal [Ω/m]. Dimensões (N condutores, N condutores, K frequências).
-- `Y`: Matriz de admitância transversal [S/m]. Dimensões (N condutores, N condutores, K frequências).
+- `Z`: Matriz de impedância longitudinal [Ω/m].
+    Dimensões (N condutores, N condutores, K frequências).
+- `Y`: Matriz de admitância transversal [S/m].
+    Dimensões (N condutores, N condutores, K frequências).
 - `comprimento`: Comprimento total [m].
 
 # Retorna
 
-- `yn`: Matriz de admitância nodal [S]. Dimensões (2N condutores, 2N condutores, K frequências).
+- `yn`: Matriz de admitância nodal [S].
+    Dimensões (2N condutores, 2N condutores, K frequências).
 """
 function ynodal_array(
     Z::Array{<:Complex{T}, 3}, Y::Array{<:Complex{T}, 3}, comprimento::Real

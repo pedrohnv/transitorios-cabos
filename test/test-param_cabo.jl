@@ -3,14 +3,14 @@
 using Test
 using NPZ
 
-include("../src/cabos.jl")
 include("../src/linhas_transmissao.jl")
 
-begin  # Setup cable: tripolar with sheathed core
+@testset "Cable electric parameters" begin
+    # Setup cable: tripolar with sheathed core
     # Material properties
     epsr_c = 3.31     # condutor central
     epsr_b = 2.3      # blindagem, jaqueta da veia
-    epsr_a = 10       # última camada, envolve a armadura
+    epsr_a = 10.0     # última camada, envolve a armadura
 
     rho_c = 1.7241e-8   # Ω·m, condutor central
     rho_b = 2.2e-7      # Ω·m, blindagem
@@ -59,7 +59,7 @@ begin  # Setup cable: tripolar with sheathed core
         epsr_b,
         epsr_a,
         cables = [fase_a, fase_b, fase_c],
-        x = ra[1],
+        x = 0.0,
         y = 0.0,
         name = "Pipe",
         sigma_medium = 5.0,
@@ -70,16 +70,34 @@ begin  # Setup cable: tripolar with sheathed core
     nf = 200
     freq = exp10.(range(0, 9, nf))
     freq_s = freq * 2im * pi
+
+
+    @testset "Impedância de retorno pelo mar" begin
+        z = [cZmar(jw, ra[end], sig_s, eps_s) for jw in freq_s]
+        esperado = npzread("test/fixtures/z0_mar.npy")
+        @test z ≈ esperado
+    end
+
+
+    @testset "Cabo coaxial" begin
+        z = stack([comp_coaxial_cable_impedance(fase_a, jw) for jw in freq_s])
+        esperado = npzread("test/fixtures/cZPcbi_zin.npy")
+        @test z ≈ esperado
+        p = comp_coaxial_cable_elastance(fase_a)
+        esperado = npzread("test/fixtures/cZPcbi_pin.npy")[:, :, 1]
+        @test p ≈ esperado
+    end
+
+
+    #@testset "Impedance and Admittance matrices" begin
+        begin
+        zc, yc = zy_cabo(armadura, freq_s, sig_s, eps_s)
+        zc_esperado = npzread("test/fixtures/zc_tripolar.npy")
+        yc_esperado = npzread("test/fixtures/yc_tripolar.npy")
+        #@test zc ≈ zc_esperado
+        @test yc ≈ yc_esperado
+    end
+
 end
 
-
-@testset "Impedance and Admittance matrices" begin
-    zc, yc = zy_cabo(armadura, freq_s, sig_s, eps_s)
-    zc_esperado = npzread("test/fixtures/zc_tripolar.npy")
-    yc_esperado = npzread("test/fixtures/yc_tripolar.npy")
-
-    # np.testing.assert_allclose(zc, zc_esperado, rtol=1e-07, atol=1e-10)
-    # np.testing.assert_allclose(yc, yc_esperado, rtol=1e-07, atol=1e-10)
-
-    yn_esperado = npzread("test/fixtures/gabarito_yn_tripolar.npy")
-end
+maximum(abs.(zc_esperado - zc))

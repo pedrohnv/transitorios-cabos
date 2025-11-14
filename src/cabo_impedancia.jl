@@ -58,7 +58,11 @@ function calc_inner_skin_effect_impedance(
         w_in = m * radius_in
         s_in = exp(abs(real(w_in)) - w_out)
         s_out = exp(abs(real(w_out)) - w_in)
-        sc = s_in / s_out  # Should be applied to all besselix() involving w_in
+        if isinf(s_out)
+            sc = 0.0
+        else
+            sc = s_in / s_out  # Should be applied to all besselix() involving w_in
+        end
 
         # Bessel function terms with uncertainty handling using the macro
         N =
@@ -139,7 +143,11 @@ function calc_outer_skin_effect_impedance(
         else
             s_in = exp(abs(real(w_in)) - w_out)
             s_out = exp(abs(real(w_out)) - w_in)
-            sc = s_in / s_out  # Should be applied to all besseli() involving w_in
+            if isinf(s_out)
+                sc = 0.0
+            else
+                sc = s_in / s_out  # Should be applied to all besselix() involving w_in
+            end
 
             # Bessel function terms with uncertainty handling using the macro
             N =
@@ -216,7 +224,11 @@ function calc_mutual_skin_effect_impedance(
 
         s_in = exp(abs(real(w_in)) - w_out)
         s_out = exp(abs(real(w_out)) - w_in)
-        sc = s_in / s_out  # Should be applied to all besselix() involving w_in
+        if isinf(s_out)
+            sc = 0.0
+        else
+            sc = s_in / s_out  # Should be applied to all besselix() involving w_in
+        end
 
         # Bessel function terms with uncertainty handling using the macro
         D =
@@ -258,15 +270,6 @@ function calc_tubular_capacitor_impedance(
     mur_ins::Real,
     complex_frequency::Complex{T},
 ) where {T <: Real}
-    if iszero(radius_in)
-        return calc_outer_skin_effect_impedance(
-            radius_in,
-            radius_ext,
-            rho_c,
-            mur_c,
-            complex_frequency,
-        )
-    end
     return complex_frequency * μ₀ * mur_ins * log(radius_ext / radius_in) / (2 * pi)
 end
 
@@ -577,7 +580,7 @@ function comp_pipe_cable_impedance(
         cable_i = pipecable.cables[i]
         x1 = cable_i.x - pipecable.x
         y1 = cable_i.y - pipecable.y
-        distance_1 = sqrt(x1^2 + y1^2)
+        distance_1 = hypot(x1, y1)
 
         if cable_i isa PipeCable
             radius_1 = cable_i.radius_ext_insulator
@@ -604,7 +607,7 @@ function comp_pipe_cable_impedance(
             cable_k = pipecable.cables[k]
             x2 = cable_k.x - pipecable.x
             y2 = cable_k.y - pipecable.y
-            distance_2 = sqrt(x2^2 + y2^2)
+            distance_2 = hypot(x2, y2)
 
             if cable_k isa PipeCable
                 radius_2 = cable_k.radius_ext_insulator
@@ -649,7 +652,7 @@ end
 - `next_index`: index in the impedance matrix after the computation.
 """
 function comp_cable_impedance_recursive!(
-    Z::Matrix{Complex{T}},
+    Z::AbstractMatrix{Complex{T}},
     cable::AbstractCable,
     complex_frequency::Complex{T},
     start_index::Int,
@@ -686,30 +689,34 @@ attribute mapping the conductor to the matrix position.
 # Parameters
 
 - `cable_system`: The outermost cable.
-- `complex_frequencies`: List of `Nf` complex angular frequencies `s = c + jω` [rad/s].
+- `complex_frequencies`: Vector of complex angular frequencies `s = c + jω` [rad/s].
 - `sigma_mar`: Permissividade elétrica do mar [S/m]. Use `nothing` para ignorar o mar.
 - `epsr_mar`: Permissividade elétrica do mar.
 
-Returns
--------
+# Returns
+
 - `Z`: Impedance matrix of shape (Nc, Nc, Nf).
 """
 function comp_cable_system_impedance(
     cable_system::PipeCable,
-    complex_frequency::Complex{T},
+    complex_frequencies::AbstractVector{Complex{T}},
     sigma_mar::Union{Real, Nothing} = 5.0,
     epsr_mar::Union{Real, Nothing} = 81.0,
 ) where {T <: Real}
     Nc = count_conductors_cable(cable_system)
-    Z = zeros(Complex{T}, Nc, Nc)
-    current_index = 1
-    for cable in cable_system.cables
-        current_index = comp_cable_impedance_recursive!(Z, cable, complex_frequency, current_index)
-    end
+    Nf = length(complex_frequencies)
+    Z = zeros(Complex{T}, Nc, Nc, Nf)
+    rca = outer_radius(cable_system)
 
-    if !isnothing(sigma_mar)
-        rca = outer_radius(cable_system)
-        Z .+= cZmar(complex_frequency, rca, sigma_mar, epsr_mar)
+    for (k, jw) in enumerate(complex_frequencies)
+        Zk = @view Z[:, :, k]
+        current_index = 1
+        for cable in cable_system.cables
+            current_index = comp_cable_impedance_recursive!(Zk, cable, jw, current_index)
+        end
+        if !isnothing(sigma_mar)
+            Zk .+= cZmar(jw, rca, sigma_mar, epsr_mar)
+        end
     end
 
     return Z

@@ -64,7 +64,6 @@ function calc_pipe_mutual_internal_elastance(
     dk = distance_2
     r_sq = r1^2 + 0.0im
     didk = di * dk
-    TOL = 1e-12
     
     if abs(theta) < TOL && abs(di - dk) < TOL  # i == k
         Qik = log(r1 / radius_1 * (1 - di^2 / r_sq))
@@ -172,7 +171,7 @@ function comp_pipe_cable_elastance(pipecable::PipeCable)
         y1 = cable_i.y - pipecable.y
         distance_1 = hypot(x1, y1)
         radius_1 = outer_radius(cable_i)
-        
+
         p_ii = calc_pipe_self_internal_elastance(
             distance_1, radius_1, pipecable.radius_in, pipecable.epsr_in
         )
@@ -193,7 +192,6 @@ function comp_pipe_cable_elastance(pipecable::PipeCable)
             # Calculate angle between vectors
             dot_product = x1 * x2 + y1 * y2
             magnitude_product = distance_1 * distance_2
-            TOL = 1e-12
 
             if abs(magnitude_product) < TOL
                 theta = 0.0
@@ -310,18 +308,18 @@ of interest in rad/s.
 """
 function comp_cable_system_admittance(
     cable_system::PipeCable,
-    complex_frequencies::Vector{<:Complex{<:Real}}
+    complex_frequencies::AbstractVector{<:Complex{<:Real}}
 )
     P = comp_cable_system_elastance(cable_system)
     P_inv = inv(P)
-    P_inv = (P_inv + P_inv') / 2.0  # ensure symmetry
+    P_inv = (P_inv + transpose(P_inv)) / 2.0  # ensure symmetry
 
     Nc = size(P, 1)
     Nf = length(complex_frequencies)
     Y = zeros(ComplexF64, Nc, Nc, Nf)
 
-    for (k, jω) in enumerate(complex_frequencies)
-        Y[:, :, k] = jω * P_inv
+    for (k, jw) in enumerate(complex_frequencies)
+        Y[:, :, k] = jw * P_inv
     end
 
     return Y
