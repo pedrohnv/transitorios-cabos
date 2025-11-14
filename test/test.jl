@@ -61,5 +61,5 @@ armadura = PipeCable(
     name = "Pipe",
     sigma_medium = 5.0,
     epsr_medium = 81.0,
-    comprimento = 1.0
+    cable_length = 1.0
 )
