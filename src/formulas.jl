@@ -3,9 +3,9 @@
 using LinearAlgebra
 
 include("cabos.jl")
-include("cabo_admitancia.jl")
-include("cabo_impedancia.jl")
-
+include("formulas/admitancia.jl")
+include("formulas/impedancia.jl")
+include("formulas/modal.jl")
 
 """Cacula as matrizes Z e Y por unidade de comprimento de um sistema.
 
@@ -100,7 +100,6 @@ function ynodal_array(
     Z::Array{<:Complex{T}, 3}, Y::Array{<:Complex{T}, 3}, comprimento::Real
 ) where {T <: Real}
     nf = size(Z, 3)
-    yn = [ynodal(Z[:, :, f], Y[:, :, f], comprimento) for f in 1:nf]
-    yn = stack(yn)  # Empilha ao longo do eixo da frequência
+    yn = stack([ynodal(Z[:, :, f], Y[:, :, f], comprimento) for f in 1:nf])
     return yn
 end

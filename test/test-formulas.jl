@@ -3,7 +3,9 @@
 using Test
 using NPZ
 
-include("../src/linhas_transmissao.jl")
+include("../src/formulas.jl")
+include("../src/utils.jl")
+
 
 @testset "Cable electric parameters" begin
     # Setup cable: tripolar with sheathed core
@@ -64,7 +66,7 @@ include("../src/linhas_transmissao.jl")
         name = "Pipe",
         sigma_medium = 5.0,
         epsr_medium = 81.0,
-        cable_length = 1.0
+        cable_length = 2500.0
     )
 
     # Frequências
@@ -102,13 +104,38 @@ include("../src/linhas_transmissao.jl")
     end
 
 
-    @testset "Impedance and Admittance matrices" begin
-        zc, yc = zy_cabo(armadura, freq_s, sig_s, eps_s)
+    @testset "Cabo Tripolar" begin
+        zc_calculado, yc_calculado = zy_cabo(armadura, freq_s, sig_s, eps_s)
+        
         zc_esperado = npzread("test/fixtures/tripolar_Z.npy")
-        @test zc ≈ zc_esperado
-
         yc_esperado = npzread("test/fixtures/tripolar_Y.npy")
-        @test yc ≈ yc_esperado
+
+        @test zc_calculado ≈ zc_esperado
+        @test yc_calculado ≈ yc_esperado
     end
 
+
+    @testset "Ynodal equivalente e Análise modal" begin
+        zc = npzread("test/fixtures/tripolar_Z.npy")
+        yc = npzread("test/fixtures/tripolar_Y.npy")
+
+        yn = ynodal_array(zc, yc, 2500.0)
+        yn_esperado = npzread("test/fixtures/tripolar_yn.npy")
+        @test yn ≈ yn_esperado
+
+        gamma_esperado = npzread("test/fixtures/tripolar_propagacao.npy")
+        for i in 1:nf
+            gamma_esperado[:, i] = sort(gamma_esperado[:, i]; by = cplxpair)
+        end
+        for unwrap in [false, true]
+            gamma, velocidade, atenuacao, Ti = modos_propagacao(
+                zc, yc, freq_s, unwrap, tol = 1e-8, max_iter = 5000
+            )
+            for i in 1:nf
+                gamma[:, i] = sort(gamma[:, i]; by = cplxpair)
+            end
+            @test gamma ≈ gamma_esperado
+        end
+
+    end
 end

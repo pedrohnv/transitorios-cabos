@@ -6,8 +6,7 @@ using PythonCall
 least_squares = pyimport("scipy.optimize").least_squares
 
 
-"""
-    Solve the complex symmetric eigenvalue problem for multiple frequencies.
+"""Solve the complex symmetric eigenvalue problem for multiple frequencies.
 
 S_omega may need to be normalized. Example:
 ```
@@ -21,13 +20,13 @@ eigvals = [(-w2u0e0 .* (1 .+ eigvals[:, i])) for i in 1:N]
 ```
 
 # Parameters
-- `S_omega`: K x N x N array of complex matrices S(ω) for K frequencies
+- `S_omega`: (K x N x N) array of complex matrices S(ω) for K frequencies
 - `tol`: Tolerance for convergence
 - `max_iter`: Maximum number of iterations
 
 # Returns
-- `eigenvalues`: K x N array of complex eigenvalues
-- `eigenvectors`: K x N x N array of complex eigenvectors (columns are eigenvectors)
+- `eigenvalues`: (K x N) array of complex eigenvalues
+- `eigenvectors`: (K x N x N) array of complex eigenvectors (columns are eigenvectors)
 
 # References
 
@@ -37,7 +36,6 @@ Levenberg–Marquardt Method," in IEEE Transactions on Power Delivery, vol. 29,
 no. 4, pp. 1621-1629, Aug. 2014, doi: 10.1109/TPWRD.2013.2284504.
 """
 function eig_levenberg_marquardt(S_omega; tol=1e-8, max_iter=1000)
-    
     N, _, K = size(S_omega)
     eigenvalues = zeros(ComplexF64, N, K)
     eigenvectors = zeros(ComplexF64, N, N, K)
@@ -97,7 +95,7 @@ function eig_levenberg_marquardt(S_omega; tol=1e-8, max_iter=1000)
             
             # Solve with Levenberg-Marquardt
             res = least_squares(
-                residuals,
+                @py residuals,
                 x0,
                 method="lm",
                 xtol=tol,
@@ -146,32 +144,24 @@ v_1 = v_0 / \\exp(\\alpha)
 
 # Parameters
 
-- `Z`: array of complex, shape (Nc, Nc, Nf)
-    Series impedance matrix per unit length \\[Ω/m\\].
-- `Y`: array of complex, shape (Nc, Nc, Nf)
-    Shunt admittance matrix per unit length \\[S/m\\].
-- `complex_frequencies`: array of complex, shape (Nf,)
-    Vetor de frequências angulares complexas no formato `c + jw` [rad/s].
-- `unwrap`: opitional. Default is true.
-    Unwrap the propagation modes so their order is preserved?
+- `Z`: Series impedance matrix per unit length \\[Ω/m\\]. Dimensões (Nc, Nc, Nf).
+- `Y`: Shunt admittance matrix per unit length \\[S/m\\]. Dimensões (Nc, Nc, Nf).
+- `complex_frequencies`: Vetor de frequências angulares complexas no formato `c + jw` [rad/s]. Dimensão (Nf,).
+- `unwrap`: Unwrap the propagation modes so their order is preserved?
 - `tol`: Tolerance for convergence if unwrap is true.
 - `max_iter`: Maximum number of iterations if unwrap is true.
 
 # Returns
 
-- `propagation`: array of complex, shape (Nc, Nf)
-    Propagation modes `a + jb`, where `a` is \\[Np/m\\] and `b` is \\[rad/s\\].
-- `velocity`: array of real, shape (Nc, Nf)
-    Velocity of the propagation modes in \\[m/μs\\].
-- `attenuation`: array of real, shape (Nc, Nf)
-    Attenuation of the propagation modes in \\[dB/m\\].
-- `Ti`: array of complex, shape (Nc, Nc, Nf)
-    Current transformation matrix.
+- `propagation`: Propagation modes `a + jb`, where `a` is \\[Np/m\\] and `b` is \\[rad/s\\]. Dimensões (Nc, Nf).
+- `velocity`: Velocity of the propagation modes in \\[m/μs\\]. Dimensões (Nc, Nf).
+- `attenuation`: Attenuation of the propagation modes in \\[dB/m\\]. Dimensões (Nc, Nf).
+- `Ti`: Current transformation matrix. Dimensões (Nc, Nc, Nf).
 
 # Notes
 The relation between Neper and decibels is `1 dB = log(10) / 20 Np`.
 """
-function propagation_modes(
+function modos_propagacao(
     Z::Array{Complex{T}, 3},
     Y::Array{Complex{T}, 3},
     complex_frequencies::Vector{Complex{T}},
@@ -197,7 +187,7 @@ function propagation_modes(
             YZ = Y[:, :, i] * Z[:, :, i]
             S_omega[:, :, i] = YZ / (-w2u0e0[i]) - I
         end
-        evals, evecs = eig_levenberg_marquardt(S_omega)
+        evals, evecs = eig_levenberg_marquardt(S_omega; tol = tol , max_iter = max_iter)
         for i in 1:Nf
             evals[:, i] = (-w2u0e0[i] .* (1 .+ evals[:, i]))
             propagation[:, i] = sqrt.(evals[:, i])
@@ -216,4 +206,28 @@ function propagation_modes(
         end
     end
     return (propagation), (velocity), (attenuation), Ti
+end
+
+
+using NPZ
+zc = npzread("test/fixtures/tripolar_Z.npy")
+yc = npzread("test/fixtures/tripolar_Y.npy")
+gamma_esperado = npzread("test/fixtures/tripolar_propagacao.npy")
+
+# Frequências
+nf = 200
+freq = exp10.(range(0, 9, nf))
+freq_s = freq * 2im * pi
+
+for i in 1:nf
+    gamma_esperado[:, i] = sort(gamma_esperado[:, i]; by = cplxpair)
+end
+for unwrap in [false, true]
+    gamma, velocidade, atenuacao, Ti = modos_propagacao(
+        zc, yc, freq_s, unwrap, tol = 1e-8, max_iter = 5000
+    )
+    for i in 1:nf
+        gamma[:, i] = sort(gamma[:, i]; by = cplxpair)
+    end
+    @test gamma ≈ gamma_esperado
 end
