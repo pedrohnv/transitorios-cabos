@@ -86,7 +86,7 @@ include("../src/linhas_transmissao.jl")
         @test z ≈ esperado
     
         p = comp_coaxial_cable_elastance(fase_a)
-        esperado = npzread("test/fixtures/coaxial_P.npy")[:, :, 1]
+        esperado = npzread("test/fixtures/coaxial_P.npy")
         @test p ≈ esperado
     end
 
@@ -97,7 +97,7 @@ include("../src/linhas_transmissao.jl")
         @test z ≈ esperado
 
         p = comp_pipe_cable_elastance(armadura)
-        esperado = npzread("test/fixtures/pipe_P.npy")[:, :, 1]
+        esperado = npzread("test/fixtures/pipe_P.npy")
         @test p ≈ esperado
     end
 
