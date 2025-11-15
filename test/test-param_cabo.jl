@@ -105,12 +105,10 @@ include("../src/linhas_transmissao.jl")
     @testset "Impedance and Admittance matrices" begin
         zc, yc = zy_cabo(armadura, freq_s, sig_s, eps_s)
         zc_esperado = npzread("test/fixtures/tripolar_Z.npy")
-        #@test zc ≈ zc_esperado
+        @test zc ≈ zc_esperado
 
         yc_esperado = npzread("test/fixtures/tripolar_Y.npy")
         @test yc ≈ yc_esperado
     end
 
 end
-
-maximum(abs.(zc_esperado - zc))

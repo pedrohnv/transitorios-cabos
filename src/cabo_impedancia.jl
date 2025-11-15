@@ -711,9 +711,7 @@ function comp_cable_system_impedance(
     for (k, jw) in enumerate(complex_frequencies)
         Zk = @view Z[:, :, k]
         current_index = 1
-        for cable in cable_system.cables
-            current_index = comp_cable_impedance_recursive!(Zk, cable, jw, current_index)
-        end
+        comp_cable_impedance_recursive!(Zk, cable_system, jw, current_index)
         if !isnothing(sigma_mar)
             Zk .+= cZmar(jw, rca, sigma_mar, epsr_mar)
         end
