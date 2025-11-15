@@ -67,6 +67,7 @@ include("../src/linhas_transmissao.jl")
         cable_length = 1.0
     )
 
+    # Frequências
     nf = 200
     freq = exp10.(range(0, 9, nf))
     freq_s = freq * 2im * pi
@@ -79,22 +80,34 @@ include("../src/linhas_transmissao.jl")
     end
 
 
-    @testset "Cabo coaxial" begin
+    @testset "Cabo Coaxial" begin
         z = stack([comp_coaxial_cable_impedance(fase_a, jw) for jw in freq_s])
-        esperado = npzread("test/fixtures/cZPcbi_zin.npy")
+        esperado = npzread("test/fixtures/coaxial_Z.npy")
         @test z ≈ esperado
+    
         p = comp_coaxial_cable_elastance(fase_a)
-        esperado = npzread("test/fixtures/cZPcbi_pin.npy")[:, :, 1]
+        esperado = npzread("test/fixtures/coaxial_P.npy")[:, :, 1]
         @test p ≈ esperado
     end
 
 
-    #@testset "Impedance and Admittance matrices" begin
-        begin
+    @testset "Cabo Pipe-Type" begin
+        z = stack([comp_pipe_cable_impedance(armadura, jw) for jw in freq_s])
+        esperado = npzread("test/fixtures/pipe_Z.npy")
+        @test z ≈ esperado
+
+        p = comp_pipe_cable_elastance(armadura)
+        esperado = npzread("test/fixtures/pipe_P.npy")[:, :, 1]
+        @test p ≈ esperado
+    end
+
+
+    @testset "Impedance and Admittance matrices" begin
         zc, yc = zy_cabo(armadura, freq_s, sig_s, eps_s)
-        zc_esperado = npzread("test/fixtures/zc_tripolar.npy")
-        yc_esperado = npzread("test/fixtures/yc_tripolar.npy")
+        zc_esperado = npzread("test/fixtures/tripolar_Z.npy")
         #@test zc ≈ zc_esperado
+
+        yc_esperado = npzread("test/fixtures/tripolar_Y.npy")
         @test yc ≈ yc_esperado
     end
 
