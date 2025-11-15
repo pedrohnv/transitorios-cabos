@@ -1,8 +1,2 @@
-teste
-outros
-old
-backup
-*.h5
-*.csv
+.gitignore
 .vscode
-*.pdf
