@@ -3,9 +3,11 @@
 using LinearAlgebra
 
 include("cabos.jl")
+include("utils.jl")
 include("formulas/admitancia.jl")
 include("formulas/impedancia.jl")
 include("formulas/modal.jl")
+
 
 """Cacula as matrizes Z e Y por unidade de comprimento de um sistema.
 

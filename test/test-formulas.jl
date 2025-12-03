@@ -5,6 +5,8 @@ using NPZ
 
 include("../src/formulas.jl")
 include("../src/utils.jl")
+#using TransitoriosCabos
+#using TransitoriosCabos.Cabos
 
 
 @testset "Cable electric parameters" begin
@@ -115,27 +117,42 @@ include("../src/utils.jl")
     end
 
 
-    @testset "Ynodal equivalente e Análise modal" begin
+    @testset "Ynodal equivalente" begin
         zc = npzread("test/fixtures/tripolar_Z.npy")
         yc = npzread("test/fixtures/tripolar_Y.npy")
-
         yn = ynodal_array(zc, yc, 2500.0)
         yn_esperado = npzread("test/fixtures/tripolar_yn.npy")
         @test yn ≈ yn_esperado
+    end
 
-        gamma_esperado = npzread("test/fixtures/tripolar_propagacao.npy")
+
+    @testset "Análise modal" begin
+        zc = npzread("test/fixtures/tripolar_Z.npy")
+        yc = npzread("test/fixtures/tripolar_Y.npy")
+        gamma_esperado = transpose(npzread("test/fixtures/tripolar_propagacao.npy"))
         for i in 1:nf
-            gamma_esperado[:, i] = sort(gamma_esperado[:, i]; by = cplxpair)
+            gamma_esperado[i, :] = sort(gamma_esperado[i, :]; by = cplxpair)
         end
-        for unwrap in [false, true]
+
+        let unwrap = false
             gamma, velocidade, atenuacao, Ti = modos_propagacao(
                 zc, yc, freq_s, unwrap, tol = 1e-8, max_iter = 5000
             )
             for i in 1:nf
-                gamma[:, i] = sort(gamma[:, i]; by = cplxpair)
+                gamma[i, :] = sort(gamma[i, :]; by = cplxpair)
             end
             @test gamma ≈ gamma_esperado
         end
 
+        let unwrap = true
+            gamma, velocidade, atenuacao, Ti = modos_propagacao(
+                zc, yc, freq_s, unwrap, tol = 1e-8, max_iter = 5000
+            )
+            for i in 1:nf
+                gamma[i, :] = sort(gamma[i, :]; by = cplxpair)
+            end
+            @test gamma ≈ gamma_esperado
+        end
     end
+
 end

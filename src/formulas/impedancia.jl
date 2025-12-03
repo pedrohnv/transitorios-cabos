@@ -5,8 +5,6 @@
 
 using SpecialFunctions
 
-const TOL = 1e-6  # tolerance for geometric tests
-const μ₀ = 4e-7 * pi  # vacuum magnetic permeability [H/m]
 
 # ==============================================================================
 # Calculation functions (individual formulas)

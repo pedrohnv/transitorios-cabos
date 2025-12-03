@@ -1,4 +1,9 @@
-# Utility functions
+# Utilities
+
+const TOL = 1e-6  # tolerance for geometric tests
+const ε₀ = 8.854187817e-12  # Vacuum permittivity [F/m]
+const μ₀ = 4e-7 * pi  # vacuum magnetic permeability [H/m]
+
 
 """
     cplxpair(x)
