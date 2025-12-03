@@ -1,9 +1,14 @@
 module TransitoriosCabos
 
-export struct_to_dict, struct_from_dict, count_conductors_cable, CableComponent, CoaxialCable, PipeCable
-export zy_cabo, ynodal, ynodal_array, modos_propagacao
+include("cabos/cabos.jl")
+include("formulas/formulas.jl")
+include("utils.jl")
 
-include("cabos.jl")
-include("formulas.jl")
+using .Cabos
+using .Formulas
 
-end  # module
+export struct_to_dict, struct_from_dict, count_conductors_cable, outer_radius,
+       CableComponent, CoaxialCable, PipeCable,
+       zy_cabo, ynodal, ynodal_array, modos_propagacao
+
+end # module

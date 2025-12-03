@@ -1,12 +1,17 @@
 # Funções para linhas de transmissão: Ynodal, modos de propagação, etc.
+module Formulas
+
+export zy_cabo, ynodal, ynodal_array, modos_propagacao
 
 using LinearAlgebra
+using ..Cabos
+using ..Cabos: AbstractCable
 
-include("cabos.jl")
-include("utils.jl")
-include("formulas/admitancia.jl")
-include("formulas/impedancia.jl")
-include("formulas/modal.jl")
+
+include("../utils.jl")
+include("admitancia.jl")
+include("impedancia.jl")
+include("modal.jl")
 
 
 """Cacula as matrizes Z e Y por unidade de comprimento de um sistema.
@@ -105,3 +110,5 @@ function ynodal_array(
     yn = stack([ynodal(Z[:, :, f], Y[:, :, f], comprimento) for f in 1:nf])
     return yn
 end
+
+end  # module

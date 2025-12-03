@@ -10,6 +10,38 @@ using SpecialFunctions
 # Calculation functions (individual formulas)
 # ==============================================================================
 
+
+"""Impedância de retorno pelo mar.
+
+# Parâmetros
+
+- `freq_s`: Frequência angular complexa no formato `c + jw` [rad/s].
+- `rca`: Raio da capa externa da armadura [m].
+- `sigma`: Permissividade elétrica do mar [S/m]. O padrão é `5.0`.
+    Use `nothing` para ignorar o mar.
+- `epsr`: Permissividade elétrica do mar. O padrão é `81.0`.
+
+# Retorna
+
+- `z`: impedância do mar [Ω/m].
+"""
+function calc_impedancia_mar(
+    freq_s::Complex{T},
+    rca::Real,
+    sigma::Real = 5.0,
+    epsr::Real = 81.0,
+) where {T <: Real}
+    if isnothing(sigma) || isnothing(epsr)
+        return 0.0
+    end
+    jw = freq_s
+    rho = 1.0 / sigma
+    eta = sqrt(jw * μ₀ * (sigma + jw * ε₀ * epsr))
+    Zmar = eta * rho / (2 * pi * rca) * besselkx(0, eta * rca) / besselkx(1, eta * rca)
+    return Zmar
+end
+
+
 """
 Impedance of a tubular conductor considering the skin effect in its inner surface.
 
@@ -711,40 +743,9 @@ function comp_cable_system_impedance(
         current_index = 1
         comp_cable_impedance_recursive!(Zk, cable_system, jw, current_index)
         if !isnothing(sigma_mar)
-            Zk .+= cZmar(jw, rca, sigma_mar, epsr_mar)
+            Zk .+= calc_impedancia_mar(jw, rca, sigma_mar, epsr_mar)
         end
     end
 
     return Z
-end
-
-
-"""Impedância de retorno pelo mar.
-
-# Parâmetros
-
-- `freq_s`: Frequência angular complexa no formato `c + jw` [rad/s].
-- `rca`: Raio da capa externa da armadura [m].
-- `sigma`: Permissividade elétrica do mar [S/m]. O padrão é `5.0`.
-    Use `nothing` para ignorar o mar.
-- `epsr`: Permissividade elétrica do mar. O padrão é `81.0`.
-
-# Retorna
-
-- `z`: impedância do mar [Ω/m].
-"""
-function cZmar(
-    freq_s::Complex{T},
-    rca::Real,
-    sigma::Real = 5.0,
-    epsr::Real = 81.0,
-) where {T <: Real}
-    if isnothing(sigma) || isnothing(epsr)
-        return 0.0
-    end
-    jw = freq_s
-    rho = 1.0 / sigma
-    eta = sqrt(jw * μ₀ * (sigma + jw * ε₀ * epsr))
-    Zmar = eta * rho / (2 * pi * rca) * besselkx(0, eta * rca) / besselkx(1, eta * rca)
-    return Zmar
 end

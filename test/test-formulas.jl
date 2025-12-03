@@ -3,11 +3,12 @@
 using Test
 using NPZ
 
-include("../src/formulas.jl")
-include("../src/utils.jl")
-#using TransitoriosCabos
-#using TransitoriosCabos.Cabos
-
+using TransitoriosCabos
+using TransitoriosCabos: cplxpair
+using TransitoriosCabos.Formulas: calc_impedancia_mar,
+    comp_coaxial_cable_impedance, comp_coaxial_cable_elastance,
+    comp_coaxial_cable_impedance, comp_coaxial_cable_elastance,
+    comp_pipe_cable_impedance, comp_pipe_cable_elastance
 
 @testset "Cable electric parameters" begin
     # Setup cable: tripolar with sheathed core
@@ -78,30 +79,30 @@ include("../src/utils.jl")
 
 
     @testset "Impedância de retorno pelo mar" begin
-        z = [cZmar(jw, ra[end], sig_s, eps_s) for jw in freq_s]
-        esperado = npzread("test/fixtures/z0_mar.npy")
+        z = [calc_impedancia_mar(jw, ra[end], sig_s, eps_s) for jw in freq_s]
+        esperado = npzread("fixtures/z0_mar.npy")
         @test z ≈ esperado
     end
 
 
     @testset "Cabo Coaxial" begin
         z = stack([comp_coaxial_cable_impedance(fase_a, jw) for jw in freq_s])
-        esperado = npzread("test/fixtures/coaxial_Z.npy")
+        esperado = npzread("fixtures/coaxial_Z.npy")
         @test z ≈ esperado
     
         p = comp_coaxial_cable_elastance(fase_a)
-        esperado = npzread("test/fixtures/coaxial_P.npy")
+        esperado = npzread("fixtures/coaxial_P.npy")
         @test p ≈ esperado
     end
 
 
     @testset "Cabo Pipe-Type" begin
         z = stack([comp_pipe_cable_impedance(armadura, jw) for jw in freq_s])
-        esperado = npzread("test/fixtures/pipe_Z.npy")
+        esperado = npzread("fixtures/pipe_Z.npy")
         @test z ≈ esperado
 
         p = comp_pipe_cable_elastance(armadura)
-        esperado = npzread("test/fixtures/pipe_P.npy")
+        esperado = npzread("fixtures/pipe_P.npy")
         @test p ≈ esperado
     end
 
@@ -109,8 +110,8 @@ include("../src/utils.jl")
     @testset "Cabo Tripolar" begin
         zc_calculado, yc_calculado = zy_cabo(armadura, freq_s, sig_s, eps_s)
         
-        zc_esperado = npzread("test/fixtures/tripolar_Z.npy")
-        yc_esperado = npzread("test/fixtures/tripolar_Y.npy")
+        zc_esperado = npzread("fixtures/tripolar_Z.npy")
+        yc_esperado = npzread("fixtures/tripolar_Y.npy")
 
         @test zc_calculado ≈ zc_esperado
         @test yc_calculado ≈ yc_esperado
@@ -118,18 +119,18 @@ include("../src/utils.jl")
 
 
     @testset "Ynodal equivalente" begin
-        zc = npzread("test/fixtures/tripolar_Z.npy")
-        yc = npzread("test/fixtures/tripolar_Y.npy")
+        zc = npzread("fixtures/tripolar_Z.npy")
+        yc = npzread("fixtures/tripolar_Y.npy")
         yn = ynodal_array(zc, yc, 2500.0)
-        yn_esperado = npzread("test/fixtures/tripolar_yn.npy")
+        yn_esperado = npzread("fixtures/tripolar_yn.npy")
         @test yn ≈ yn_esperado
     end
 
 
     @testset "Análise modal" begin
-        zc = npzread("test/fixtures/tripolar_Z.npy")
-        yc = npzread("test/fixtures/tripolar_Y.npy")
-        gamma_esperado = transpose(npzread("test/fixtures/tripolar_propagacao.npy"))
+        zc = npzread("fixtures/tripolar_Z.npy")
+        yc = npzread("fixtures/tripolar_Y.npy")
+        gamma_esperado = transpose(npzread("fixtures/tripolar_propagacao.npy"))
         for i in 1:nf
             gamma_esperado[i, :] = sort(gamma_esperado[i, :]; by = cplxpair)
         end
